@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import axios from "axios";
 import IconDeepPurple from "../components/icons/IconDeepPurple.vue";
 import IconInput from "../components/icons/IconInput.vue";
 import IconSettings from "../components/icons/IconSettings.vue";
 import IconLogout from "../components/icons/IconLogout.vue";
+import IconChevron from "../components/icons/IconChevron.vue";
 
-const isSidebarCollapsed = ref(false); // Desktop sidebar toggle
-const isMobileSidebarOpen = ref(false); // Mobile fullscreen navigation toggle
+const isSidebarCollapsed = ref(false); //pc sidebar toggle
+const isMobileSidebarOpen = ref(false); //mobile fullscreen nav toggle
 const inputText = ref("");
+
+//init vals for emotions
 const emotions = ref({
   joy: 0,
   sadness: 0,
@@ -15,6 +19,7 @@ const emotions = ref({
   fear: 0,
   surprise: 0,
 });
+const isLoading = ref(false); //for when the api is loading
 
 function toggleSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -24,20 +29,45 @@ function toggleMobileSidebar() {
   isMobileSidebarOpen.value = !isMobileSidebarOpen.value;
 }
 
-function analyzeText() {
-  emotions.value = {
-    joy: Math.random() * 100,
-    sadness: Math.random() * 100,
-    anger: Math.random() * 100,
-    fear: Math.random() * 100,
-    surprise: Math.random() * 100,
-  };
+//main functionality here -- text analysis -- TO DO: should probably put this in a separate js file for better reusability among components
+async function analyzeText() {
+
+  //if nothing is in the textarea
+  if (!inputText.value.trim()) {
+    alert("Please enter some text to analyze.");
+    return;
+  }
+
+  //starts tracking the loading
+  isLoading.value = true;
+
+  try {
+
+    //obviously, replace the url after deployment
+    const API_URL = "http://localhost:8000/analyze";
+    const response = await axios.post(API_URL, {
+      text: inputText.value,
+    });
+
+    //map the API response to the emotions object
+    const result = response.data.predictions[0];
+    emotions.value = result.reduce((acc: any, emotion: any) => {
+      acc[emotion.label.toLowerCase()] = emotion.score * 100; // Convert to percentage
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error("Error analyzing text:", error);
+    alert("Failed to analyze text. Please try again later.");
+  } finally {
+    isLoading.value = false;
+  }
 }
 </script>
 
 <template>
   <div class="flex min-h-screen bg-gray-900 text-gray-300">
-    <!-- Hamburger Menu for Mobile -->
+
+    <!-- hamburger menu for mobile -->
     <button
       @click="toggleMobileSidebar"
       class="fixed top-4 left-4 z-50 bg-gray-800 text-gray-400 p-2 rounded-md hover:text-purple-400 md:hidden"
@@ -58,34 +88,22 @@ function analyzeText() {
       </svg>
     </button>
 
-    <!-- Fullscreen Mobile Navigation -->
+    <!-- fullscreen mobile nav -->
     <div
       v-if="isMobileSidebarOpen"
       class="fixed inset-0 bg-gray-800 text-gray-300 z-50"
     >
       <div class="flex flex-col h-full">
-        <!-- Close Button -->
+
+        <!-- close button -->
         <button
           @click="toggleMobileSidebar"
           class="p-4 text-gray-400 hover:text-purple-400 self-end"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <IconChevron class="h-6 w-6"/>
         </button>
 
-        <!-- Navigation Links -->
+        <!-- links -->
         <nav class="flex-grow p-6 space-y-4">
           <a
             href="#"
@@ -112,7 +130,7 @@ function analyzeText() {
       </div>
     </div>
 
-    <!-- Sidebar for Larger Screens -->
+    <!-- non-mobile nav -->
     <aside
       class="hidden md:block transition-all duration-300 ease-in-out bg-gray-800 text-gray-400"
       :class="isSidebarCollapsed ? 'w-16' : 'w-64'"
@@ -174,7 +192,7 @@ function analyzeText() {
       </nav>
     </aside>
 
-    <!-- Main Content -->
+    <!-- content here -->
     <main class="flex-1 p-6">
       <header class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-bold text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
@@ -183,7 +201,8 @@ function analyzeText() {
       </header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Text Input Area -->
+
+        <!-- text input -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-md">
           <textarea
             v-model="inputText"
@@ -192,13 +211,15 @@ function analyzeText() {
           ></textarea>
           <button
             @click="analyzeText"
+            :disabled="isLoading"
             class="mt-8 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-gray-100 shadow-md transition w-full"
           >
-            Analyze Text
+            <span v-if="!isLoading">Analyze Text</span>
+            <span v-else>Loading...</span>
           </button>
         </div>
 
-        <!-- Emotion Results -->
+        <!-- analysis results ui -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-md">
           <h3 class="text-xl font-semibold text-gray-200">Emotion Analysis</h3>
           <ul class="mt-4 space-y-4">
