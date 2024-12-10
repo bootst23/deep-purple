@@ -11,6 +11,9 @@ function handleFileChange(event: Event) {
   const files = (event.target as HTMLInputElement).files;
   if (files && files.length > 0) {
     selectedFile.value = files[0];
+  } else {
+    alert("No file selected.");
+    selectedFile.value = null;
   }
 }
 
@@ -40,7 +43,7 @@ async function analyzeFile() {
     const formData = new FormData();
     formData.append("file", selectedFile.value);
 
-    const API_URL = "http://localhost:8000/analyze"; // Replace with your backend endpoint
+    const API_URL = "http://localhost:8000/analyze"; 
     const response = await axios.post(API_URL, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -83,20 +86,27 @@ function saveResult() {
       <div class="flex flex-col md:flex-row gap-6">
         <!-- Drag and Drop Area -->
         <div
-          class="flex-1 border-2 border-dashed border-gray-500 bg-gray-700 rounded-md flex items-center justify-center h-48 cursor-pointer"
+          class="flex-1 border-2 border-dashed border-gray-500 bg-gray-700 rounded-md flex flex-col items-center justify-center h-48 cursor-pointer"
           @dragover="handleDragOver"
           @drop="handleDrop"
         >
           <div class="text-center space-y-2">
             <div class="text-4xl">+</div>
-            <div class="text-sm">Choose File or Drag and Drop</div>
-            <input
-              type="file"
-              id="fileInput"
-              class="hidden"
-              @change="handleFileChange"
-            />
+            <div class="text-sm">Drag and Drop File Here</div>
           </div>
+          <button
+            class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 transition"
+            @click="$refs.fileInput.click()"
+          >
+            Browse
+          </button>
+          <input
+            type="file"
+            id="fileInput"
+            ref="fileInput"
+            class="hidden"
+            @change="handleFileChange"
+          />
         </div>
 
         <!-- Analyze Button -->
