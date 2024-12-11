@@ -33,21 +33,24 @@ class SaveRequest(BaseModel):
 @app.post("/save")
 async def save_results(request: SaveRequest):
     try:
-        # Extract emotion scores
-        emotions = request.emotion_result[0]  # Get the first element as it's an array
-        anger_score = emotions[0]["score"]
-        disgust_score = emotions[1]["score"]
-        fear_score = emotions[2]["score"]
-        joy_score = emotions[3]["score"]
-        neutral_score = emotions[4]["score"]
-        sadness_score = emotions[5]["score"]
-        surprise_score = emotions[6]["score"]
+
+        # Map scores to labels
+        scores = {emotion["label"]: emotion["score"] for emotion in request.emotion_result}
+
+        # Extract emotion scores with default value 0 if not present
+        anger_score = scores.get("anger", 0)
+        disgust_score = scores.get("disgust", 0)
+        fear_score = scores.get("fear", 0)
+        joy_score = scores.get("joy", 0)
+        neutral_score = scores.get("neutral", 0)
+        sadness_score = scores.get("sadness", 0)
+        surprise_score = scores.get("surprise", 0)
 
         # Insert into emotions table
         cursor.execute(
             """
             INSERT INTO emotions (file_name, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s,%s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (request.file_name, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score),
         )
