@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import FileUploadView from '../views/FileUploadView.vue'
+import LoginView from '../views/LoginView.vue'
+import HistoryView from '../views/HistoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,8 +23,19 @@ const router = createRouter({
     {
       path: '/fileUpload',
       name: 'fileUpload',
-      component: () => import('../views/FileUploadView.vue')
-    }
+      component: FileUploadView
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/history',
+      name: 'history',
+      component: HistoryView
+    },
+    
   ]
 })
 
