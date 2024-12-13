@@ -27,13 +27,15 @@ app.add_middleware(
 )
 
 class SaveRequest(BaseModel):
+    name: str
     file_name: str
+    content: str
+    input_type: str
     emotion_result: list
 
 @app.post("/save")
 async def save_results(request: SaveRequest):
     try:
-
         # Map scores to labels
         scores = {emotion["label"]: emotion["score"] for emotion in request.emotion_result}
 
@@ -46,16 +48,27 @@ async def save_results(request: SaveRequest):
         sadness_score = scores.get("sadness", 0)
         surprise_score = scores.get("surprise", 0)
 
-        # Insert into emotions table
         cursor.execute(
             """
-            INSERT INTO emotions (file_name, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO "Results" (name, content, input_type, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (request.file_name, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score),
+            (
+                request.name,
+                request.content,
+                request.input_type,
+                anger_score,
+                disgust_score,
+                fear_score,
+                joy_score,
+                neutral_score,
+                sadness_score,
+                surprise_score,
+            ),
         )
         conn.commit()
         return {"message": "Results saved successfully"}
     except Exception as e:
         conn.rollback()
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
