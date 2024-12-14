@@ -39,7 +39,7 @@ import type { RouteLocationRaw } from 'vue-router';
 export default {
   data() {
     return {
-      pastResults: null as { id: string; name: string; createdAt: string; input_type: string; majorEmotion: string }[] | null,
+      pastResults: null as { id: number; name: string; createdAt: string; input_type: string; majorEmotion: string }[] | null,
     };
   },
   async mounted() {
