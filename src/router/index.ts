@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import FileUploadView from '../views/FileUploadView.vue'
 import LoginView from '../views/LoginView.vue'
 import HistoryView from '../views/HistoryView.vue'
+import ResultView from '@/views/ResultView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,12 @@ const router = createRouter({
       name: 'history',
       component: HistoryView
     },
+    {
+      path: '/history/:resultId',
+      name: 'result',
+      component: ResultView
+    },
+
     
   ]
 })
