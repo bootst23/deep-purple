@@ -72,7 +72,7 @@
 
   </div>
   <div v-else>
-    <p>Result not found.</p>
+    <p>Loading..</p>
   </div>
 </template>
 
