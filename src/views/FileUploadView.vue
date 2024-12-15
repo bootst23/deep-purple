@@ -27,6 +27,7 @@
             ref="fileInput"
             class="hidden"
             @change="handleFileChange"
+            multiple
           />
           <button
             class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-500 transition"
@@ -42,16 +43,16 @@
           <textarea
             class="w-full mt-2 p-4 bg-gray-700 rounded-md text-gray-200 resize-none h-52"
             readonly
-            v-model="fileContent"
+            v-model="aggregatedFileContent"
           ></textarea>
         </div>
       </div>
 
       <div class="flex flex-col mt-2">
-        <div class="text-sm text-gray-300">File Name: {{ fileName }}</div>
+        <div class="text-sm text-gray-300">Files Selected: {{ fileNames.join(', ') }}</div>
         <button
           class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-500 transition w-6/12"
-          @click="analyzeFile"
+          @click="analyzeFiles"
           :disabled="isLoading"
         >
           <span v-if="!isLoading">Analyze</span>
@@ -143,25 +144,25 @@ GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.min.m
 
 
 
-const selectedFile = ref<File | null>(null);
-const fileContent = ref<string>("");
+const selectedFiles = ref<File[]>([]);
+const aggregatedFileContent = ref<string>("");
 const emotionResult = ref<{ label: string; score: number }[]>([]);
 const isLoading = ref(false);
-const fileName = ref("");
+const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
 const communicationName = ref(""); 
 const showModal = ref(false);
 
 function handleFileChange(event: Event) {
-  const files = (event.target as HTMLInputElement).files;
-  if (files && files.length > 0) {
-    selectedFile.value = files[0];
-    fileName.value = files[0].name;
-    readFileContent();
+  const files = Array.from((event.target as HTMLInputElement).files || []);
+  if (files.length > 0) {
+    selectedFiles.value = files;
+    fileNames.value = files.map((file) => file.name);
+    readFilesContent();
   } else {
-    alert("No file selected.");
-    selectedFile.value = null;
-    fileName.value = "";
+    alert("No files selected.");
+    selectedFiles.value = [];
+    fileNames.value = [];
   }
 }
 
@@ -172,44 +173,47 @@ function handleDragOver(event: DragEvent) {
 
 function handleDrop(event: DragEvent) {
   event.preventDefault();
-  const files = event.dataTransfer?.files;
-  if (files && files.length > 0) {
-    selectedFile.value = files[0];
-    fileName.value = files[0].name;
-    readFileContent();
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (files.length > 0) {
+    selectedFiles.value = files;
+    fileNames.value = files.map((file) => file.name);
+    readFilesContent();
   }
 }
 
-async function readFileContent() {
-  if (!selectedFile.value) return;
+async function readFilesContent() {
+  aggregatedFileContent.value = "";
 
-  const reader = new FileReader();
+  for (const file of selectedFiles.value) {
+    const content = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
 
-  fileContent.value = await new Promise<string>((resolve, reject) => {
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
+      if (file.type === "text/plain") {
+        reader.readAsText(file);
+      } else if (file.type === "application/pdf") {
+        extractTextFromPDF(file).then(resolve).catch(reject);
+      }
+    });
 
-    if (selectedFile.value?.type === "text/plain") {
-      reader.readAsText(selectedFile.value);
-    } else if (selectedFile.value?.type === "application/pdf") {
-      extractTextFromPDF(selectedFile.value).then(resolve).catch(reject);
-    }
-  });
+    aggregatedFileContent.value += content + "\n \n";
+  }
 }
 
-async function analyzeFile() {
-  if (!selectedFile.value) {
-    alert("Please select or drag a file.");
+async function analyzeFiles() {
+  if (selectedFiles.value.length === 0) {
+    alert("Please select or drag files.");
     return;
   }
 
   const allowedTypes = ["text/plain", "application/pdf"];
-  if (!allowedTypes.includes(selectedFile.value.type)) {
+  if (selectedFiles.value.some((file) => !allowedTypes.includes(file.type))) {
     alert("Only .txt and .pdf files are allowed.");
     return;
   }
-  if (selectedFile.value.size > 5 * 1024 * 1024) {
-    alert("File size exceeds the 5MB limit.");
+  if (selectedFiles.value.some((file) => file.size > 5 * 1024 * 1024)) {
+    alert("One or more files exceed the 5MB limit.");
     return;
   }
 
@@ -217,15 +221,15 @@ async function analyzeFile() {
 
   try {
     const ANALYZE_API_URL = "http://localhost:8000/analyze";
-    const response = await axios.post(ANALYZE_API_URL, { text: fileContent.value }, {
+    const response = await axios.post(ANALYZE_API_URL, { text: aggregatedFileContent.value }, {
       headers: { "Content-Type": "application/json" },
     });
 
     emotionResult.value = response.data.predictions[0];
     isSaveDisabled.value = false;
   } catch (error) {
-    console.error("Error analyzing file:", error);
-    alert("Failed to analyze the file. Please try again.");
+    console.error("Error analyzing files:", error);
+    alert("Failed to analyze the files. Please try again.");
   } finally {
     isLoading.value = false;
   }
@@ -241,13 +245,12 @@ async function saveResultToDB() {
     alert("Please provide a name for this communication.");
     return;
   }
-
   const SAVE_API_URL = "http://localhost:8001/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
-      file_name: fileName.value,
-      content: fileContent.value,
+      file_name: fileNames.value.join(", "),
+      content: aggregatedFileContent.value,
       input_type: "file",
       emotion_result: emotionResult.value,
     });
