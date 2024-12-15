@@ -37,8 +37,39 @@
       </div>
     </div>
 
-    <!-- Export Button -->
-    <button class="export-btn" @click="exportData">Export</button>
+    <!-- Buttons -->
+    <button class="export-btn" @click="openExportModal">Export</button>
+    <button class="delete-btn" @click="showDeleteConfirmation">Delete</button>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Are you sure you want to delete this result permanently?</h3>
+        <div class="modal-actions">
+          <button class="yes-btn" @click="deleteResult(result.id)">Yes</button>
+          <button class="cancel-btn" @click="closeModal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Result deleted successfully!</h3>
+        <button class="ok-btn" @click="navigateToHistory">OK</button>
+      </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div v-if="showExportModal" class="export-modal-overlay">
+      <div class="export-modal">
+        <h3>Choose Export Format</h3>
+        <button @click="exportAsCSV">Export as CSV</button>
+        <button @click="exportAsPDF">Export as PDF</button>
+        <button @click="closeExportModal">Cancel</button>
+      </div>
+    </div>
+
   </div>
   <div v-else>
     <p>Result not found.</p>
@@ -59,6 +90,9 @@ export default {
       result: null as Result | null,
       emotions: {},
       chart: null as Chart | null,
+      showConfirmModal: false, // State for modals
+      showSuccessModal: false, 
+      showExportModal: false,
     };
   },
   async mounted() {
@@ -140,12 +174,108 @@ export default {
               },
             },
           },
-        }) as Chart; // Type assertion here
+        }) as Chart; 
       }
     },
-    exportData() {
-      //Export
+
+    openExportModal() {
+      this.showExportModal = true;
     },
+    closeExportModal() {
+      this.showExportModal = false;
+    },
+
+    exportAsCSV() {
+      if (this.result) {
+        const csvData = [];
+
+        csvData.push(['File Content', ...Object.keys(this.emotions).map((e) => this.capitalize(e))]); //Header
+
+        csvData.push([
+          this.result.content,
+          ...Object.values(this.emotions).map((score) => (score as number).toFixed(2)),  //Data
+        ]);
+
+        // Convert array to CSV string
+        const csvContent = csvData.map((row) => row.join(",")).join("\n");
+
+        // Create a Blob and download the file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Emotion_Analysis_Result_${this.result.id}.csv`;
+        link.click();
+      }
+    },
+
+    
+    async exportAsPDF() {
+      if (this.result) {
+        const { jsPDF } = await import('jspdf');
+        const html2canvas = (await import('html2canvas')).default;
+
+        const doc = new jsPDF();
+
+        // Add title and basic information
+        doc.setFontSize(18);
+        doc.text('Emotion Analysis Result', 10, 10);
+
+        doc.setFontSize(14);
+        doc.text(`Result Name: ${this.result.name}`, 10, 20);
+
+        // Add file content
+        doc.setFontSize(12);
+        doc.text('File Content:', 10, 30);
+        doc.setFontSize(10);
+        doc.text(this.result.content, 10, 40, { maxWidth: 180 });
+
+        // Add emotion scores
+        const emotionsStartY = 50 + Math.ceil(this.result.content.length / 100) * 10; 
+        doc.setFontSize(12);
+        doc.text('Emotion Scores:', 10, emotionsStartY);
+        let yPosition = emotionsStartY + 10;
+        Object.entries(this.emotions).forEach(([emotion, score]) => {
+          doc.text(`${this.capitalize(emotion)}: ${(score as number).toFixed(2)}`, 10, yPosition);
+          yPosition += 10;
+        });
+
+
+        // Add Pie Chart
+        const chartElement = document.getElementById('emotionPieChart');
+        if (chartElement) {
+          const chartCanvas = await html2canvas(chartElement, { backgroundColor: null });
+          const chartImage = chartCanvas.toDataURL('image/png');
+          doc.addImage(chartImage, 'PNG', 10, yPosition, 180, 90); 
+        }
+
+        // Save the PDF
+        doc.save(`Emotion_Analysis_Result_${this.result.id}.pdf`);
+      }
+    },
+
+    showDeleteConfirmation() {
+      this.showConfirmModal = true;
+    },
+    closeModal() {
+      this.showConfirmModal = false;
+      this.showSuccessModal = false;
+    },
+
+    async deleteResult(resultId: number) {
+      try {
+        await ResultsService.delete(resultId);
+        this.showConfirmModal = false;
+        this.showSuccessModal = true; // Show success modal
+      } catch (error) {
+        console.error('Error deleting result:', error);
+        alert('Failed to delete result.');
+      }
+    },
+
+    navigateToHistory() {
+      this.$router.push('/history'); // Navigate to history page
+    },
+
   },
 };
 </script>
@@ -279,6 +409,7 @@ export default {
 
 /* Export Button */
 .export-btn {
+  margin-right: 30px;
   width: 300px;
   background-color: #6c5ce7;
   color: #ffffff;
@@ -293,5 +424,130 @@ export default {
 
 .export-btn:hover {
   background-color: #4b39a2;
+}
+
+.delete-btn {
+  margin-right: 30px;
+  width: 300px;
+  background-color: #f51111;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.export-btn:hover {
+  background-color: #b01818;
+}
+
+/*styles for modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #2b223c;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: #ffffff;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.yes-btn,
+.cancel-btn,
+.ok-btn {
+  width: 100px;
+  background-color: #6c5ce7;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.yes-btn:hover,
+.cancel-btn:hover,
+.ok-btn:hover {
+  background-color: #4b39a2;
+}
+
+.cancel-btn {
+  background-color: #f51111;
+}
+
+.cancel-btn:hover {
+  background-color: #b01818;
+}
+
+.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Box */
+.export-modal {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 300px;
+}
+
+.export-modal h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.export-modal button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.export-modal button:hover {
+  background-color: #2980b9;
+}
+
+.export-modal button:last-child {
+  background-color: #e74c3c;
+}
+
+.export-modal button:last-child:hover {
+  background-color: #c0392b;
 }
 </style>

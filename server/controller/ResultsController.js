@@ -29,7 +29,7 @@ export async function index(req, res) {
 
 export async function show(req, res) {
     try {
-        const result = await Results.findByPk(req.params.resultId);
+        const result = await Results.findByPk(req.params.resultId);  //Fond Specific Result
         if (!result) {
             return res.status(404).send({
                 error: 'Result not found.'
@@ -43,4 +43,25 @@ export async function show(req, res) {
         });
     }
 }
+
+export async function destroy(req, res) {
+    try {
+      const resultId = parseInt(req.params.resultId);
+      if (isNaN(resultId)) {
+        return res.status(400).send({ error: 'Invalid result ID.' });
+      }
+  
+      const result = await Results.findByPk(resultId);
+      if (!result) {
+        return res.status(404).send({ error: 'Result not found.' });
+      }
+  
+      await result.destroy(); // Deletes the result
+      res.send({ message: 'Result deleted successfully.' });
+    } catch (err) {
+      console.error(`Error deleting result with ID ${req.params.resultId}:`, err);
+      res.status(500).send({ error: `Error Occurred Deleting Result: ${err.message}` });
+    }
+  }
+  
 

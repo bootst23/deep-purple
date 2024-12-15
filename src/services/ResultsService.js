@@ -11,5 +11,11 @@ export default {
   // Fetch a single result by resultId
   show(resultId) {
     return api().get(`results/${resultId}`);
+  },
+
+  // Delete a single result by resultId
+  delete(resultId) {
+    return api().delete(`results/${resultId}`);
   }
+
 };
