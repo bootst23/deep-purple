@@ -21,6 +21,7 @@ declare module '@/services/ResultsService.js' {
   const ResultsService: {
     index: () => Promise<{ data: SentimentResult[] }>;
     show: (resultId: number) => Promise<{ data: SentimentResult }>; 
+    delete: (resultId: number) => Promise<void>; 
   };
 
   export default ResultsService;

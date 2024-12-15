@@ -40,8 +40,5 @@ async function loadModels() {
     db.Sequelize = Sequelize; 
 }
 
-// Wait for models to load
 await loadModels();
-
-// Export db object (containing sequelize and models)
 export { db };
