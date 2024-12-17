@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import Toolbar from "./views/ToolBar.vue"; 
+import SideNav from "@/components/SideNav.vue"
+
 </script>
 
 <template>
-  <Toolbar/>
-  <RouterView />
+  <SideNav>
+    <RouterView />
+  </SideNav>
 </template>
