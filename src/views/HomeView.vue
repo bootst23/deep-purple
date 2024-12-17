@@ -23,7 +23,7 @@ function handleSubmit() {
       </span>
     </h1>
     <p class="text-xl text-purple-200 mb-8 text-center max-w-2xl">
-      Your AI assistant for all your questions and needs
+      Your Emotional Detection AI
     </p>
     <form class="w-full max-w-md" @submit.prevent="handleSubmit">
       <div class="flex gap-2">
