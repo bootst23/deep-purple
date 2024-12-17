@@ -1,157 +1,157 @@
 <template>
-  <div class="result-page" v-if="result">
-    <header class="result-header">
-      <h1>{{ result.name }}</h1>
-      <p>Emotion Analysis Result</p>
+  <div class="min-h-screen bg-[#1e1b29] text-white p-8" v-if="result">
+    <header class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-[#d3bafc]">{{ result.name }}</h1>
+      <p class="text-[#a8a6b3]">Emotion Analysis Result</p>
     </header>
 
     <!-- Text Content Section -->
-    <div class="text-content">
-      <h3>Text Content</h3>
-      <p>{{ result.content }}</p>
+    <div class="bg-[#2b223c] rounded-lg p-5 mb-5 max-h-[300px] overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words">
+      <h3 class="mb-2 text-[#d3bafc]">Text Content</h3>
+      <p class="text-base text-[#c3bdd7] m-0">{{ result.content }}</p>
     </div>
 
     <!-- Emotion Scores and Pie Chart -->
-    <h2> Analysis Result </h2>
-    <div class="analysis-container">
+    <h2 class="text-xl font-bold">Analysis Result</h2>
+    <div class="bg-[#2b223c] rounded-lg flex flex-wrap gap-8 mt-5 mb-8 py-5">
       <!-- Emotion Scores -->
-      <div class="emotion-scores-section">
-        <h3>Emotion Scores</h3>
-        <div class="emotion-scores">
+      <div class="flex-1 text-center">
+        <h3 class="text-lg font-bold text-[#d3bafc]">Emotion Scores</h3>
+        <div class="pl-8 pt-8 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-6">
           <div
             v-for="(score, emotion) in emotions"
             :key="emotion"
-            class="emotion-box"
+            class="w-44 h-24 p-4 rounded-lg text-center text-white font-bold"
             :class="getEmotionClass(emotion)"
           >
-            <p class="emotion-name">{{ capitalize(emotion) }}</p>
-            <p class="emotion-score">{{ (score * 100).toFixed(1) }}%</p>
+            <p class="text-base font-semibold">{{ capitalize(emotion) }}</p>
+            <p class="text-base">{{ (score * 100).toFixed(1) }}%</p>
           </div>
         </div>
       </div>
 
       <!-- Pie Chart -->
-      <div class="chart-container">
-        <h3>Emotion Distribution</h3>
-        <canvas id="emotionPieChart"></canvas>
+      <div class="flex-[0.8] text-center">
+        <h3 class="text-lg font-bold text-[#d3bafc]">Emotion Distribution</h3>
+        <canvas id="emotionPieChart" class="max-w-full max-h-[500px] pt-8"></canvas>
       </div>
     </div>
 
-    <!-- Buttons -->
-    <button class="export-btn" @click="openExportModal">Export</button>
-    <button class="delete-btn" @click="showDeleteConfirmation">Delete</button>
+    <!-- Export Button -->
+    <button class="w-72 bg-[#6c5ce7] text-white mr-2 rounded-lg px-5 py-2.5 text-base font-bold cursor-pointer transition duration-300 hover:bg-[#4b39a2]" @click="openExportModal">
+      Export
+    </button>
+
+    <button class="w-72 bg-[#ff2b2b] text-white rounded-lg px-5 py-2.5 text-base font-bold cursor-pointer transition duration-300 hover:bg-[#a23939]" @click="showDeleteConfirmation">
+      Delete
+    </button>
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showConfirmModal" class="modal-overlay">
-      <div class="modal-content">
-        <h3>Are you sure you want to delete this result permanently?</h3>
-        <div class="modal-actions">
-          <button class="yes-btn" @click="deleteResult(result.id)">Yes</button>
-          <button class="cancel-btn" @click="closeModal">Cancel</button>
+        <div class="modal-content">
+          <h3>Are you sure you want to delete this result permanently?</h3>
+          <div class="modal-actions">
+            <button class="yes-btn" @click="deleteResult(result.id)">Yes</button>
+            <button class="cancel-btn" @click="closeModal">Cancel</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Success Modal -->
-    <div v-if="showSuccessModal" class="modal-overlay">
-      <div class="modal-content">
-        <h3>Result deleted successfully!</h3>
-        <button class="ok-btn" @click="navigateToHistory">OK</button>
+      <!-- Success Modal -->
+      <div v-if="showSuccessModal" class="modal-overlay">
+        <div class="modal-content">
+          <h3>Result deleted successfully!</h3>
+          <button class="ok-btn" @click="navigateToHistory">OK</button>
+        </div>
       </div>
-    </div>
 
-    <!-- Export Modal -->
-    <div v-if="showExportModal" class="export-modal-overlay">
-      <div class="export-modal">
-        <h3>Choose Export Format</h3>
-        <button @click="exportAsCSV">Export as CSV</button>
-        <button @click="exportAsPDF">Export as PDF</button>
-        <button @click="closeExportModal">Cancel</button>
+      <!-- Export Modal -->
+      <div v-if="showExportModal" class="export-modal-overlay">
+        <div class="export-modal">
+          <h3>Choose Export Format</h3>
+          <button @click="exportAsCSV">Export as CSV</button>
+          <button @click="exportAsPDF">Export as PDF</button>
+          <button @click="closeExportModal">Cancel</button>
+        </div>
       </div>
-    </div>
-
   </div>
   <div v-else>
-    <p>Loading..</p>
+    <p>Loading...</p>
   </div>
 </template>
 
-<script lang="ts">
-import { useResultStore } from '@/stores/result'; 
-import type { Result } from '@/stores/result';
-import { useRoute } from 'vue-router';
+<script setup lang="ts">
+import { useResultStore } from '@/stores/result';
+import { useRoute, useRouter } from 'vue-router';
 import ResultsService from '@/services/ResultsService.js';
 import { Chart, registerables } from 'chart.js';
+
+import {jsPDF} from 'jspdf';
+import html2canvas from 'html2canvas';
+import { nextTick, onMounted, ref } from 'vue';
+import { useEmotionAPI } from '@/composables/api/emotion';
+import type { EmotionResult } from '@/types/emotion';
 Chart.register(...registerables);
 
-export default {
-  data() {
-    return {
-      result: null as Result | null,
-      emotions: {},
-      chart: null as Chart | null,
-      showConfirmModal: false, // State for modals
-      showSuccessModal: false, 
-      showExportModal: false,
-    };
-  },
-  async mounted() {
-    const route = useRoute();
-    const resultId = parseInt(route.params.resultId as string);
-    const resultStore = useResultStore(); // Access Pinia store
+const route = useRoute();
+const router = useRouter();
+const resultStore = useResultStore(); // Access Pinia store
+const {get} = useEmotionAPI();
 
-    try {
-      const result = await ResultsService.show(resultId); // Fetch result from API
-      console.log('API Response:', result); 
-      console.log('First Result:', result.data);
+const result = ref<EmotionResult>();
+const emotions = ref({});
+const chart = ref<Chart>();
+const showConfirmModal = ref(false); // State for modals
+const showSuccessModal = ref(false); // State for modals
+const showExportModal = ref(false); // State for modals
 
-      resultStore.setResult(result.data);
-      this.result = result.data;
-      
-    } catch (err) {
-      console.error('Error fetching result:', err);
-    }
-
-    // Ensure that 'result' is not null before assigning emotions
-    if (this.result) {
-      this.emotions = {
-        anger: this.result.anger_score,
-        disgust: this.result.disgust_score,
-        fear: this.result.fear_score,
-        joy: this.result.joy_score,
-        neutral: this.result.neutral_score,
-        sadness: this.result.sadness_score,
-        surprise: this.result.surprise_score,
+onMounted(async () => {
+  const resultId = parseInt(route.params.resultId as string);
+  // Fetching the emotion result from the API
+  try {
+    const res = await get(resultId);
+    resultStore.setResult(res);
+    result.value = res;
+      emotions.value = {
+        anger: res.anger_score,
+        disgust: res.disgust_score,
+        fear: res.fear_score,
+        joy: res.joy_score,
+        neutral: res.neutral_score,
+        sadness: res.sadness_score,
+        surprise: res.surprise_score,
       };
 
-      this.$nextTick(() => {
-        this.renderChart();
+      nextTick(() => {
+        renderChart();
       });
-    }
-  },
-  methods: {
-    capitalize(word: string) {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    },
-    getEmotionClass(emotion: string) {
-      const classes: { [key: string]: string } = {
-        anger: 'emotion-anger',
-        surprise: 'emotion-surprise',
-        sadness: 'emotion-sadness',
-        joy: 'emotion-joy',
-        neutral: 'emotion-neutral',
-        disgust: 'emotion-disgust',
-        fear: 'emotion-fear',
-      };
-      return classes[emotion] || 'emotion-default';
-    },
-    renderChart() {
-      if (this.result) {
-        const ctx = document.getElementById('emotionPieChart') as HTMLCanvasElement;
-        const data = Object.values(this.emotions);
-        const labels = Object.keys(this.emotions).map((e) => this.capitalize(e));
+  } catch (error) {
+    console.error(error);
+  }
+});
 
-        this.chart = new Chart(ctx, {
+function capitalize(word: string) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    };
+    function getEmotionClass(emotion: string) {
+      const classes: { [key: string]: string } = {
+        anger: 'bg-[#ff4c4c]',
+        surprise: 'bg-[#ffa502]',
+        sadness: 'bg-[#3742fa]',
+        joy: 'bg-[#2ed573]',
+        neutral: 'bg-[#57606f]',
+        disgust: 'bg-[#6c5ce7]',
+        fear: 'bg-[#70a1ff]',
+      };
+      return classes[emotion] || 'bg-gray-500';
+    };
+    function renderChart() {
+      if (result.value) {
+        const ctx = document.getElementById('emotionPieChart') as HTMLCanvasElement;
+        const data = Object.values(emotions);
+        const labels = Object.keys(emotions).map((e) => capitalize(e));
+
+        chart.value = new Chart(ctx, {
           type: 'pie',
           data: {
             labels,
@@ -174,276 +174,109 @@ export default {
               },
             },
           },
-        }) as Chart; 
+        }) as Chart; // Type assertion here
       }
-    },
+    }
 
-    openExportModal() {
-      this.showExportModal = true;
-    },
-    closeExportModal() {
-      this.showExportModal = false;
-    },
+    function openExportModal() {
+      showExportModal.value = true;
+    }
 
-    exportAsCSV() {
-      if (this.result) {
+    function closeExportModal() {
+      showExportModal.value = false;
+    }
+
+    function exportAsCSV() {
+      if (result.value) {
         const csvData = [];
 
-        csvData.push(['File Content', ...Object.keys(this.emotions).map((e) => this.capitalize(e))]); //Header
+        csvData.push(['File Content', ...Object.keys(emotions).map((e) => capitalize(e))]); //Header
 
         csvData.push([
-          this.result.content,
-          ...Object.values(this.emotions).map((score) => (score as number).toFixed(2)),  //Data
+          result.value.content,
+          ...Object.values(emotions).map((score) => (score as number).toFixed(2)),  //Data
         ]);
 
-        // Convert array to CSV string
+          // Convert array to CSV string
         const csvContent = csvData.map((row) => row.join(",")).join("\n");
 
-        // Create a Blob and download the file
+          // Create a Blob and download the file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Emotion_Analysis_Result_${this.result.id}.csv`;
+        link.download = `Emotion_Analysis_Result_${result.value.id}.csv`;
         link.click();
       }
-    },
+    }
 
-    
-    async exportAsPDF() {
-      if (this.result) {
-        const { jsPDF } = await import('jspdf');
-        const html2canvas = (await import('html2canvas')).default;
+
+    async function exportAsPDF() {
+      if (result.value) {
 
         const doc = new jsPDF();
 
-        // Add title and basic information
+          // Add title and basic information
         doc.setFontSize(18);
         doc.text('Emotion Analysis Result', 10, 10);
 
         doc.setFontSize(14);
-        doc.text(`Result Name: ${this.result.name}`, 10, 20);
+        doc.text(`Result Name: ${result.value.name}`, 10, 20);
 
-        // Add file content
+          // Add file content
         doc.setFontSize(12);
         doc.text('File Content:', 10, 30);
         doc.setFontSize(10);
-        doc.text(this.result.content, 10, 40, { maxWidth: 180 });
+        doc.text(result.value.content, 10, 40, { maxWidth: 180 });
 
-        // Add emotion scores
-        const emotionsStartY = 50 + Math.ceil(this.result.content.length / 100) * 10; 
+          // Add emotion scores
+        const emotionsStartY = 50 + Math.ceil(result.value.content.length / 100) * 10;
         doc.setFontSize(12);
         doc.text('Emotion Scores:', 10, emotionsStartY);
         let yPosition = emotionsStartY + 10;
-        Object.entries(this.emotions).forEach(([emotion, score]) => {
-          doc.text(`${this.capitalize(emotion)}: ${(score as number).toFixed(2)}`, 10, yPosition);
+        Object.entries(emotions).forEach(([emotion, score]) => {
+          doc.text(`${capitalize(emotion)}: ${(score as number).toFixed(2)}`, 10, yPosition);
           yPosition += 10;
         });
 
 
-        // Add Pie Chart
+          // Add Pie Chart
         const chartElement = document.getElementById('emotionPieChart');
         if (chartElement) {
           const chartCanvas = await html2canvas(chartElement, { backgroundColor: null });
           const chartImage = chartCanvas.toDataURL('image/png');
-          doc.addImage(chartImage, 'PNG', 10, yPosition, 180, 90); 
+          doc.addImage(chartImage, 'PNG', 10, yPosition, 180, 90);
         }
 
-        // Save the PDF
-        doc.save(`Emotion_Analysis_Result_${this.result.id}.pdf`);
+          // Save the PDF
+        doc.save(`Emotion_Analysis_Result_${result.value.id}.pdf`);
       }
-    },
+    }
 
-    showDeleteConfirmation() {
-      this.showConfirmModal = true;
-    },
-    closeModal() {
-      this.showConfirmModal = false;
-      this.showSuccessModal = false;
-    },
+    function showDeleteConfirmation() {
+      showConfirmModal.value = true;
+    };
+    function closeModal() {
+      showConfirmModal.value = false;
+      showSuccessModal.value = false;
+    };
 
-    async deleteResult(resultId: number) {
+    async function deleteResult(resultId: number) {
       try {
         await ResultsService.delete(resultId);
-        this.showConfirmModal = false;
-        this.showSuccessModal = true; // Show success modal
+        showConfirmModal.value = false;
+        showSuccessModal.value = true; // Show success modal
       } catch (error) {
         console.error('Error deleting result:', error);
         alert('Failed to delete result.');
       }
-    },
+    };
 
-    navigateToHistory() {
-      this.$router.push('/history'); // Navigate to history page
-    },
-
-  },
-};
+    function navigateToHistory() {
+      router.push('/history'); // Navigate to history page
+    };
 </script>
 
-<style scoped>
-/* General Styles */
-.result-page {
-  background-color: #1e1b29;
-  color: #ffffff;
-  padding: 30px;
-  min-height: 100vh;
-}
-
-.result-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.result-header h1 {
-  color: #d3bafc;
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.result-header p {
-  color: #a8a6b3;
-}
-
-/* Analysis Container */
-.analysis-container {
-  background-color: #2b223c;
-  border-radius: 10px;
-  display: flex;
-  gap: 30px;
-  margin-top: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  padding-top: 20px;
-  padding-bottom: 20px;
-}
-
-/* Emotion Scores Section */
-.emotion-scores-section {
-  flex: 0.5;
-  text-align: center;
-}
-
-.emotion-scores {
-  padding-left: 30px;
-  padding-top: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 25px;
-}
-
-.emotion-box {
-  width: 180px;
-  height: 90px;
-  padding: 15px;
-  border-radius: 10px;
-  text-align: center;
-  color: #ffffff;
-  font-weight: bold;
-  background-color: #2b223c;
-}
-
-/* Emotion Color Classes */
-.emotion-anger {
-  background-color: #ff4c4c;
-}
-
-.emotion-surprise {
-  background-color: #ffa502;
-}
-
-.emotion-sadness {
-  background-color: #3742fa;
-}
-
-.emotion-joy {
-  background-color: #2ed573;
-}
-
-.emotion-neutral {
-  background-color: #57606f;
-}
-
-.emotion-disgust {
-  background-color: #6c5ce7;
-}
-
-.emotion-fear {
-  background-color: #70a1ff;
-}
-
-/* Chart Container */
-.chart-container {
-  flex: 0.8;
-  text-align: center;
-}
-
-.chart-container canvas {
-  max-width: 100%;
-  max-height: 500px;
-  padding-top: 30px;
-}
-
-/* Text Content */
-.text-content {
-  background-color: #2b223c;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-  max-height: 300px; 
-  overflow-y: auto; 
-  overflow-x: hidden; 
-  white-space: pre-wrap; 
-  word-wrap: break-word; 
-}
-
-.text-content h3 {
-  margin-bottom: 10px;
-  color: #d3bafc;
-}
-
-.text-content p {
-  font-size: 1rem;
-  color: #c3bdd7;
-  margin: 0; 
-}
-
-/* Export Button */
-.export-btn {
-  margin-right: 30px;
-  width: 300px;
-  background-color: #6c5ce7;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.export-btn:hover {
-  background-color: #4b39a2;
-}
-
-.delete-btn {
-  margin-right: 30px;
-  width: 300px;
-  background-color: #f51111;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.export-btn:hover {
-  background-color: #b01818;
-}
-
+<style>
 /*styles for modal */
 .modal-overlay {
   position: fixed;

@@ -1,19 +1,18 @@
 <template>
-  
-  <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
-    <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
-      <h1 class="text-4xl  font-bold text-white mb-10 text-center">
-      File
-      <span
-        class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
-      >
-        Emotion Analysis
-      </span>
-     </h1>
+  <div class="min-h-screen flex items-center justify-center bg-[#1e1b29] text-white">
+    <div class="w-full max-w-6xl bg-[#1e1b29] rounded-lg shadow-md p-4 mt-14 space-y-6">
+      <h1 class="text-4xl font-bold text-white mb-10 text-center">
+        File
+        <span
+          class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
+        >
+          Emotion Analysis
+        </span>
+      </h1>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Drag and Drop Section -->
         <div
-          class="border-2 border-dashed border-gray-500 bg-gray-700 rounded-md flex flex-col items-center justify-center h-60"
+          class="border-2 border-dashed border-[#a692cc] bg-[#2b223c] rounded-md flex flex-col items-center justify-center h-60"
           @dragover="handleDragOver"
           @drop="handleDrop"
         >
@@ -30,7 +29,7 @@
             multiple
           />
           <button
-            class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-500 transition"
+            class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
             @click="$refs.fileInput.click()"
           >
             Browse
@@ -39,9 +38,9 @@
 
         <!-- File Content Section -->
         <div class="h-60">
-          <h2 class="text-lg font-bold text-gray-300">File Content</h2>
+          <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">File Content</h2>
           <textarea
-            class="w-full mt-2 p-4 bg-gray-700 rounded-md text-gray-200 resize-none h-52"
+            class="w-full mt-2 p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] resize-none h-52"
             readonly
             v-model="aggregatedFileContent"
           ></textarea>
@@ -49,9 +48,9 @@
       </div>
 
       <div class="flex flex-col mt-2">
-        <div class="text-sm text-gray-300">Files Selected: {{ fileNames.join(', ') }}</div>
+        <div class="text-sm text-[#a8a6b3]">File Name: {{ fileNames.join(', ') }}</div>
         <button
-          class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-500 transition w-6/12"
+          class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition w-6/12"
           @click="analyzeFiles"
           :disabled="isLoading"
         >
@@ -60,20 +59,20 @@
         </button>
       </div>
 
-      <div class="bg-gray-700 p-4 rounded-md mt-6">
-        <h2 class="text-lg font-bold text-gray-300">Emotion Results</h2>
+      <div class="bg-[#2b223c] p-4 rounded-md mt-6">
+        <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">Emotion Results</h2>
 
         <!-- Emotion Results Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           <!-- Pie Chart Section -->
-          <div class="bg-gray-800 p-4 rounded-md flex justify-center">
+          <div class="bg-[#1e1b29] p-4 rounded-md flex justify-center">
             <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 400px; width: 400px;" />
           </div>
 
           <!-- Top Emotions Section -->
-          <div class="bg-gray-800 p-6 rounded-md">
-            <h3 class="text-xl font-bold text-gray-300 mb-4">Top Emotions</h3>
-            <ul class="list-disc pl-5 text-gray-200 text-lg">
+          <div class="bg-[#1e1b29] p-6 rounded-md">
+            <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Top Emotions</h3>
+            <ul class="list-disc pl-5 text-[#c3bdd7] text-[1.125rem]">
               <li v-for="emotion in topThreeEmotions" :key="emotion.label">
                 {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
               </li>
@@ -84,32 +83,32 @@
 
       <!-- Save Results Button -->
       <button
-        class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-500 transition"
+        class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition"
         @click="showModal = true"
         :disabled="isSaveDisabled"
       >
         Save Results
       </button>
 
-       <!-- Save Results Modal -->
-       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-gray-800 p-6 rounded-md shadow-md w-96">
-          <h2 class="text-lg font-bold text-white mb-4">Name this Communication</h2>
+      <!-- Save Results Modal -->
+      <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
+          <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
           <input
             type="text"
             v-model="communicationName"
             placeholder="Enter a name..."
-            class="w-full p-2 mb-4 border border-gray-700 rounded-md bg-gray-700 text-gray-200"
+            class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
           />
           <div class="flex justify-end space-x-4">
             <button
-              class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-500"
+              class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]"
               @click="showModal = false"
             >
               Cancel
             </button>
             <button
-              class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-500"
+              class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]"
               @click="saveResultToDB"
             >
               Save
@@ -120,7 +119,6 @@
     </div>
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
@@ -141,8 +139,6 @@ ChartJS.register(Title, Tooltip, Legend, ArcElement);
 import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.min.mjs";
-
-
 
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
@@ -235,6 +231,7 @@ async function analyzeFiles() {
   }
 }
 
+
 async function saveResultToDB() {
   if (isSaveDisabled.value) {
     alert("Please analyze a file before saving the results.");
@@ -310,72 +307,5 @@ const topThreeEmotions = computed(() => {
 </script>
 
 <style scoped>
-.min-h-screen {
-  background-color: #1e1b29; 
-  color: #ffffff; 
-}
-
-.bg-gray-700 {
-  background-color: #2b223c; 
-}
-
-.bg-gray-800 {
-  background-color: #1e1b29; 
-}
-
-.bg-gray-900 {
-  background-color: #1e1b29; 
-}
-
-.text-gray-200 {
-  color: #c3bdd7; 
-}
-
-.text-gray-300 {
-  color: #a8a6b3; 
-}
-
-.bg-purple-600 {
-  background-color: #8a4fff; 
-}
-
-.bg-purple-500 {
-  background-color: #6f3bbd; 
-}
-
-.bg-green-600 {
-  background-color: #2ed573; 
-}
-
-.bg-green-500 {
-  background-color: #27c56e; 
-}
-
-.bg-red-600 {
-  background-color: #ff4c4c; 
-}
-
-.bg-red-500 {
-  background-color: #ff2a2a; 
-}
-
-.border-gray-500 {
-  border-color: #a692cc; 
-}
-
-.text-gray-100 {
-  color: #ffffff;
-}
-
-.text-lg {
-  font-size: 1.125rem;
-}
-
-.text-xl {
-  font-size: 1.25rem;
-}
-
-.text-2xl {
-  font-size: 1.5rem;
-}
+/* Add only unique styles here that Tailwind cannot handle */
 </style>
