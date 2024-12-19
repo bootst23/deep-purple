@@ -154,9 +154,7 @@ ChartJS.register(Title, Tooltip, Legend, ArcElement);
 //Imports for Extractiong Text From PDF File
 import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
-GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.min.mjs";
-
-
+GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
@@ -243,7 +241,7 @@ async function analyzeFiles() {
   isLoading.value = true;
 
   try {
-    const ANALYZE_API_URL = "http://localhost:8000/analyze";
+    const ANALYZE_API_URL = "https://deep-purple-modelapi.onrender.com/analyze";
     const response = await axios.post(ANALYZE_API_URL, { text: aggregatedFileContent.value }, {
       headers: { "Content-Type": "application/json" },
     });
@@ -268,7 +266,7 @@ async function saveResultToDB() {
     alert("Please provide a name for this communication.");
     return;
   }
-  const SAVE_API_URL = "http://localhost:8001/save";
+  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
