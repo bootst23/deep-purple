@@ -9,7 +9,7 @@ app = FastAPI()
 #allow CORS for all origins (only to make it easier for dev -- REMEMBER TO UPDATE WHEN CHANGED)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with a specific origin like ["http://localhost:3000"]
+    allow_origins=["https://deep-purple-site.onrender.com, http://localhost:5173"],  # Replace "*" with a specific origin like ["http://localhost:3000"]
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
