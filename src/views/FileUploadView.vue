@@ -1,6 +1,19 @@
 <template>
   
   <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
+    <!-- Navigation Buttons -->
+    <button
+          class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+          @click="navigateToFileInput"
+      >
+          File Input Analyze
+      </button>
+      <button
+          class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+          @click="navigateToDirectInput"
+      >
+          Direct Input Analyze
+      </button>
     <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
       <h1 class="text-4xl  font-bold text-white mb-10 text-center">
       File
@@ -123,6 +136,7 @@
 
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
 import { ref, computed } from "vue";
 import axios from "axios";
 import { Pie } from "vue-chartjs";
@@ -152,6 +166,15 @@ const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
 const communicationName = ref(""); 
 const showModal = ref(false);
+const router = useRouter();
+
+function navigateToFileInput() {
+router.push("/fileUpload");
+}
+
+function navigateToDirectInput() {
+router.push("/directInput");
+}
 
 function handleFileChange(event: Event) {
   const files = Array.from((event.target as HTMLInputElement).files || []);

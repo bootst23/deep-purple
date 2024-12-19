@@ -4,6 +4,7 @@ import FileUploadView from '../views/FileUploadView.vue'
 import LoginView from '../views/LoginView.vue'
 import HistoryView from '../views/HistoryView.vue'
 import ResultView from '@/views/ResultView.vue'
+import DirectInputView from '@/views/DirectInputView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -41,6 +42,11 @@ const router = createRouter({
       name: 'result',
       component: ResultView
     },
+    {
+      path: '/directInput',
+      name: 'directInput',
+      component: DirectInputView
+    }
 
     
   ]
