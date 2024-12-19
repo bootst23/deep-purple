@@ -151,7 +151,7 @@ async function analyzeText() {
   isLoading.value = true;
 
   try {
-    const ANALYZE_API_URL = "http://localhost:8000/analyze";
+    const ANALYZE_API_URL = "https://deep-purple-modelapi.onrender.com/analyze";
     const response = await axios.post(ANALYZE_API_URL, { text: userText.value }, {
       headers: { "Content-Type": "application/json" },
     });
@@ -172,7 +172,7 @@ async function saveResultToDB() {
     return;
   }
 
-  const SAVE_API_URL = "http://localhost:8001/save";
+  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
