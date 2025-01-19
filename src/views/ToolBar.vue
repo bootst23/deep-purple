@@ -18,7 +18,7 @@
     <!-- Sidebar -->
     <div
       :class="[
-        'fixed z-50 top-0 left-0 h-full bg-light-purple text-white shadow-lg transition-all duration-300 flex flex-col',
+        'fixed z-50 top-0 left-0 h-full bg-[#1f2937] text-white shadow-lg transition-all duration-300 flex flex-col',
         sidebarOpen ? 'w-64' : 'w-0', // Hide sidebar completely when closed
       ]"
     >
@@ -40,38 +40,36 @@
         <div class="mt-3 space-y-3">
           <router-link
             to="/"
-            class="block text-sm font-medium hover:text-light-purple transition"
+            class="block text-sm font-medium hover:text-[#9ca3af] transition"
           >
             Home
           </router-link>
           <router-link
             to="/fileUpload"
-            class="block text-sm font-medium hover:text-light-purple transition"
+            class="block text-sm font-medium hover:text-[#9ca3af] transition"
           >
             Detect Emotions
           </router-link>
 
           <router-link
             to="/history"
-            class="block text-sm font-medium hover:text-light-purple transition"
+            class="block text-sm font-medium hover:text-[#9ca3af] transition"
           >
             History
           </router-link>
         </div>
       </div>
 
-
       <!-- Sign In at the Bottom -->
       <div v-if="sidebarOpen" class="p-4 border-t border-gray-600">
         <router-link
           to="/login"
-          class="block text-lg font-medium hover:text-light-purple transition"
+          class="block text-lg font-medium hover:text-[#9ca3af] transition"
         >
           Sign In
         </router-link>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -110,28 +108,5 @@ export default {
 </script>
 
 <style scoped>
-.bg-light-purple {
-  background-color: #1f2937; /* Soft Dark Purple */
-}
-
-.bg-dark-purple {
-  background-color: #1f2937; /* Dark Purple */
-}
-
-.text-light-purple {
-  color: #9ca3af; /* Soft Gray for accents */
-}
-
-.placeholder-gray-600::placeholder {
-  color: #4b5563; /* Softer Gray Placeholder */
-}
-
-.overflow-y-auto {
-  max-height: calc(100vh - 150px);
-}
-
-.border-gray-600 {
-  border-color: #4b5563; /* Softer Gray Border */
-}
-
+/* All scoped styles replaced by Tailwind classes */
 </style>
