@@ -11,7 +11,7 @@ export const DB = {
     database: process.env.DB_NAME,
     password: process.env.DB_PASS,
     port: process.env.DB_PORT,
-    url: "postgresql://root:ttitSwC4qeuvtJr9guF9mwpHu3dQUtfV@dpg-ctao56aj1k6c738nu9f0-a.oregon-postgres.render.com/deep_purple_database_9ubd"
+    url: "postgresql://root:tGWKO7GE4MmAGCOZ2b16OpAkiZCQF07w@dpg-cti9ga3tq21c739m9tdg-a.singapore-postgres.render.com/deep_purple_database_101f"
 };
 
 export const authentication = {
