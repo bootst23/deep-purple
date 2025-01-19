@@ -1,50 +1,33 @@
- 
+<template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
     <!-- Navigation Buttons -->
-    <button
-          class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToFileInput"
-      >
-          File Input Analyze
-      </button>
-      <button
-          class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToDirectInput"
-      >
-          Direct Input Analyze
-      </button>
+    <button class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToFileInput">
+      File Input Analyze
+    </button>
+    <button class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToDirectInput">
+      Direct Input Analyze
+    </button>
     <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
       <h1 class="text-4xl  font-bold text-white mb-10 text-center">
-      File
-      <span
-        class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
-      >
-        Emotion Analysis
-      </span>
-     </h1>
+        File
+        <span class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
+          Emotion Analysis
+        </span>
+      </h1>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Drag and Drop Section -->
         <div
           class="border-2 border-dashed border-[#a692cc] bg-[#2b223c] rounded-md flex flex-col items-center justify-center h-60"
-          @dragover="handleDragOver"
-          @drop="handleDrop"
-        >
+          @dragover="handleDragOver" @drop="handleDrop">
           <div class="text-center space-y-2">
             <div class="text-4xl">+</div>
             <div class="text-sm">Drag and Drop File Here</div>
           </div>
-          <input
-            type="file"
-            id="fileInput"
-            ref="fileInput"
-            class="hidden"
-            @change="handleFileChange"
-            multiple
-          />
-          <button
-            class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
-            @click="$refs.fileInput.click()"
-          >
+          <input type="file" id="fileInput" ref="fileInput" class="hidden" @change="handleFileChange" multiple />
+          <button class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
+            @click="$refs.fileInput.click()">
             Browse
           </button>
         </div>
@@ -52,21 +35,15 @@
         <!-- File Content Section -->
         <div class="h-60">
           <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">File Content</h2>
-          <textarea
-            class="w-full mt-2 p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] resize-none h-52"
-            readonly
-            v-model="aggregatedFileContent"
-          ></textarea>
+          <textarea class="w-full mt-2 p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] resize-none h-52" readonly
+            v-model="aggregatedFileContent"></textarea>
         </div>
       </div>
 
       <div class="flex flex-col mt-2">
         <div class="text-sm text-[#a8a6b3]">File Name: {{ fileNames.join(', ') }}</div>
-        <button
-          class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition w-6/12"
-          @click="analyzeFiles"
-          :disabled="isLoading"
-        >
+        <button class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition w-6/12"
+          @click="analyzeFiles" :disabled="isLoading">
           <span v-if="!isLoading">Analyze</span>
           <span v-else>Analyzing...</span>
         </button>
@@ -79,7 +56,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           <!-- Pie Chart Section -->
           <div class="bg-[#1e1b29] p-4 rounded-md flex justify-center">
-            <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 400px; width: 400px;" />
+            <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }"
+              style="height: 400px; width: 400px;" />
           </div>
 
           <!-- Top Emotions Section -->
@@ -95,11 +73,8 @@
       </div>
 
       <!-- Save Results Button -->
-      <button
-        class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition"
-        @click="showModal = true"
-        :disabled="isSaveDisabled"
-      >
+      <button class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition"
+        @click="showModal = true" :disabled="isSaveDisabled">
         Save Results
       </button>
 
@@ -107,23 +82,13 @@
       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
           <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
-          <input
-            type="text"
-            v-model="communicationName"
-            placeholder="Enter a name..."
-            class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
-          />
+          <input type="text" v-model="communicationName" placeholder="Enter a name..."
+            class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]" />
           <div class="flex justify-end space-x-4">
-            <button
-              class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]"
-              @click="showModal = false"
-            >
+            <button class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]" @click="showModal = false">
               Cancel
             </button>
-            <button
-              class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]"
-              @click="saveResultToDB"
-            >
+            <button class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]" @click="saveResultToDB">
               Save
             </button>
           </div>
@@ -160,16 +125,16 @@ const emotionResult = ref<{ label: string; score: number }[]>([]);
 const isLoading = ref(false);
 const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
-const communicationName = ref(""); 
+const communicationName = ref("");
 const showModal = ref(false);
 const router = useRouter();
 
 function navigateToFileInput() {
-router.push("/fileUpload");
+  router.push("/fileUpload");
 }
 
 function navigateToDirectInput() {
-router.push("/directInput");
+  router.push("/directInput");
 }
 
 function handleFileChange(event: Event) {
