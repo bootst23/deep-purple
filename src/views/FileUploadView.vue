@@ -1,14 +1,27 @@
-<template>
-  <div class="min-h-screen flex items-center justify-center bg-[#1e1b29] text-white">
-    <div class="w-full max-w-6xl bg-[#1e1b29] rounded-lg shadow-md p-4 mt-14 space-y-6">
-      <h1 class="text-4xl font-bold text-white mb-10 text-center">
-        File
-        <span
-          class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
-        >
-          Emotion Analysis
-        </span>
-      </h1>
+ 
+  <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
+    <!-- Navigation Buttons -->
+    <button
+          class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+          @click="navigateToFileInput"
+      >
+          File Input Analyze
+      </button>
+      <button
+          class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+          @click="navigateToDirectInput"
+      >
+          Direct Input Analyze
+      </button>
+    <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
+      <h1 class="text-4xl  font-bold text-white mb-10 text-center">
+      File
+      <span
+        class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
+      >
+        Emotion Analysis
+      </span>
+     </h1>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Drag and Drop Section -->
         <div
@@ -121,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
 import { ref, computed } from "vue";
 import axios from "axios";
 import { Pie } from "vue-chartjs";
@@ -138,7 +152,7 @@ ChartJS.register(Title, Tooltip, Legend, ArcElement);
 //Imports for Extractiong Text From PDF File
 import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
-GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.min.mjs";
+GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
@@ -148,6 +162,15 @@ const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
 const communicationName = ref(""); 
 const showModal = ref(false);
+const router = useRouter();
+
+function navigateToFileInput() {
+router.push("/fileUpload");
+}
+
+function navigateToDirectInput() {
+router.push("/directInput");
+}
 
 function handleFileChange(event: Event) {
   const files = Array.from((event.target as HTMLInputElement).files || []);
@@ -216,7 +239,7 @@ async function analyzeFiles() {
   isLoading.value = true;
 
   try {
-    const ANALYZE_API_URL = "http://localhost:8000/analyze";
+    const ANALYZE_API_URL = "https://deep-purple-modelapi.onrender.com/analyze";
     const response = await axios.post(ANALYZE_API_URL, { text: aggregatedFileContent.value }, {
       headers: { "Content-Type": "application/json" },
     });
@@ -242,7 +265,7 @@ async function saveResultToDB() {
     alert("Please provide a name for this communication.");
     return;
   }
-  const SAVE_API_URL = "http://localhost:8001/save";
+  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,

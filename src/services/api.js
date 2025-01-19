@@ -2,6 +2,6 @@ import axios from "axios";
 
 export default () => {
     return axios.create({
-        baseURL : `http://localhost:8081/` //Backend API
+        baseURL : `https://deep-purple-server.onrender.com` //Backend API
     })
 }
