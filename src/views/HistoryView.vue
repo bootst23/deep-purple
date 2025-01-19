@@ -1,28 +1,28 @@
 <template>
-  <div class="history-page">
-    <header class="history-header">
-      <h1>History</h1>
-      <p>View all past sentiment analysis results in one place.</p>
+  <div class="min-h-screen p-8 bg-[#1e1b29] text-white flex flex-col">
+    <header class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-[#d3bafc]">History</h1>
+      <p class="text-base text-[#a8a6b3]">View all past sentiment analysis results in one place.</p>
     </header>
-    <div class="record-container">
+    <div class="flex-1 flex flex-wrap gap-5 justify-center items-center">
       <div
         v-for="result in pastResults"
         :key="result.id"
-        class="record-card"
+        class="bg-[#2b223c] rounded-lg shadow-lg w-72 p-5 cursor-pointer transition duration-300 ease-in-out flex flex-col justify-between hover:translate-y-[-5px] hover:shadow-2xl"
         @click="navigateTo({
-          name: 'result', 
-          params:{resultId: result.id}
-          })"
+          name: 'result',
+          params: { resultId: result.id }
+        })"
       >
-        <div class="card-header">
-          <h3>{{ result.name }}</h3>
+        <div class="mb-5">
+          <h3 class="text-xl font-bold text-white">{{ result.name }}</h3>
         </div>
-        <div class="card-body">
-          <p><strong>Date Created:</strong> {{ result.createdAt }}</p>
-          <p><strong>Input Type: </strong> {{ result.input_type }}</p>
+        <div class="mb-2.5">
+          <p class="text-sm text-[#c3bdd7] mb-2.5"><strong>Date Created:</strong> {{ result.createdAt }}</p>
+          <p class="text-sm text-[#c3bdd7]"><strong>Input Type: </strong> {{ result.input_type }}</p>
         </div>
         <div
-          class="emotion-badge"
+          class="py-2 px-3 rounded-full text-sm font-bold text-white mt-4 self-start w-[110px] text-center"
           :class="getEmotionClass(result.majorEmotion)"
         >
           {{ result.majorEmotion }}
@@ -76,147 +76,31 @@ export default {
     }
   },
   methods: {
-  getEmotionClass(emotion: string) {
-    const emotionClasses: { [key: string]: string } = {
-      anger: 'emotion-anger',
-      surprise: 'emotion-surprise',
-      sadness: 'emotion-sadness',
-      joy: 'emotion-joy',
-      neutral: 'emotion-neutral',
-      disgust: 'emotion-disgust',
-      fear: 'emotion-fear',
-    };
+    getEmotionClass(emotion: string) {
+      const emotionClasses: { [key: string]: string } = {
+        anger: 'bg-[#ff4c4c]',
+        surprise: 'bg-[#ffa502]',
+        sadness: 'bg-[#3742fa]',
+        joy: 'bg-[#2ed573]',
+        neutral: 'bg-[#57606f]',
+        disgust: 'bg-[#6c5ce7]',
+        fear: 'bg-[#70a1ff]',
+      };
 
-    if (emotion in emotionClasses) {
-      return emotionClasses[emotion as keyof typeof emotionClasses];
-    } else {
-      return 'emotion-default';
-    }
+      if (emotion in emotionClasses) {
+        return emotionClasses[emotion as keyof typeof emotionClasses];
+      } else {
+        return 'bg-gray-500';
+      }
+    },
+
+    navigateTo(route: RouteLocationRaw) {
+      this.$router.push(route);
+    },
   },
-
-  navigateTo(route: RouteLocationRaw) {
-    this.$router.push(route);
-  },
-},
-
 };
 </script>
 
-
-
 <style scoped>
-/* General Styles with Deep Purple Theme */
-.history-page {
-  padding: 30px;
-  background-color: #1e1b29; /* Deep purple background */
-  color: #ffffff; /* White text for readability */
-  min-height: 100vh; /* Ensure full viewport height */
-  display: flex;
-  flex-direction: column;
-}
-
-.history-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.history-header h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #d3bafc; /* Light purple for header */
-}
-
-.history-header p {
-  font-size: 1rem;
-  color: #a8a6b3; /* Muted lavender for subtext */
-}
-
-/* Record Card Container */
-.record-container {
-  flex: 1; /* Stretch to take available space */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  align-items: center; /* Center if there's not enough data */
-}
-
-/* Individual Record Cards */
-.record-card {
-  background-color: #2b223c; /* Dark purple card background */
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Subtle shadow */
-  width: 300px;
-  padding: 20px;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.record-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.7);
-}
-
-.card-header h3 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #ffffff; /* White text for header */
-  margin-bottom: 20px;
-}
-
-.card-body p {
-  font-size: 0.9rem;
-  color: #c3bdd7; /* Soft lavender for body text */
-  margin-bottom: 10px;
-}
-
-/* Emotion Badge */
-.emotion-badge {
-  text-align: center;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #fff;
-  margin-top: 15px;
-  align-self: flex-start;
-  width: 110px;
-}
-
-/* Emotion Classes with Vibrant Colors */
-.emotion-anger {
-  background-color: #ff4c4c;
-}
-
-.emotion-surprise {
-  background-color: #ffa502;
-}
-
-.emotion-sadness {
-  background-color: #3742fa;
-}
-
-.emotion-joy {
-  background-color: #2ed573;
-}
-
-.emotion-neutral {
-  background-color: #57606f;
-}
-
-.emotion-disgust {
-  background-color: #6c5ce7;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .record-container {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
+/* Add only unique styles here that Tailwind cannot handle */
 </style>
