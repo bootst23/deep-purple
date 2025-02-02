@@ -1,18 +1,18 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-[#1e1b29] text-white">
-      <!-- Navigation Buttons -->
-      <button
-          class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToFileInput"
-      >
-          File Input Analyze
-      </button>
-      <button
-          class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToDirectInput"
-      >
-          Direct Input Analyze
-      </button>
+    <!-- Navigation Buttons -->
+    <button
+      class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToFileInput"
+    >
+      File Input Analyze
+    </button>
+    <button
+      class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToDirectInput"
+    >
+      Direct Input Analyze
+    </button>
 
     <div class="w-full max-w-6xl bg-[#1e1b29] rounded-lg shadow-md p-4 mt-14 space-y-6">
       <!-- Main Content -->
@@ -45,31 +45,50 @@
           <span v-else>Analyzing...</span>
         </button>
       </div>
-      
 
+      <!-- Emotion Results Section -->
       <div class="bg-[#2b223c] p-4 rounded-md mt-6">
-          <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">Emotion Results</h2>
+        <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">Emotion Results</h2>
 
-          <!-- Emotion Results Section -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <!-- Grid for Pie Chart, Top Emotions, and Insights -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           <!-- Pie Chart Section -->
           <div class="bg-[#1e1b29] p-4 rounded-md flex justify-center">
-              <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 400px; width: 400px;" />
+            <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 400px; width: 400px;" />
           </div>
 
           <!-- Top Emotions Section -->
           <div class="bg-[#1e1b29] p-6 rounded-md">
-              <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Top Emotions</h3>
-              <ul class="list-disc pl-5 text-[#c3bdd7] text-[1.125rem]">
+            <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Top Emotions</h3>
+            <ul class="list-disc pl-5 text-[#c3bdd7] text-[1.125rem]">
               <li v-for="emotion in topThreeEmotions" :key="emotion.label">
-                  {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
+                {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
               </li>
-              </ul>
+            </ul>
           </div>
-          </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">
+            <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+            {{ summary }}
+          </p>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
+        </div>
+
+        <!-- Suggested Response Section -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
+        </div>
       </div>
-
-
 
       <!-- Save Results Button -->
       <button
@@ -128,6 +147,10 @@ ChartJS.register(Title, Tooltip, Legend, ArcElement);
 
 const userText = ref<string>("");
 const emotionResult = ref<{ label: string; score: number }[]>([]);
+const dominantEmotion = ref<string>(""); // Holds the dominant emotion
+const summary = ref<string>(""); // Holds the summary
+const insights = ref<string>(""); // Holds actionable insights
+const suggestedResponse = ref<string>(""); // Holds the suggested response
 const isLoading = ref(false);
 const isSaveDisabled = ref(true);
 const communicationName = ref("");
@@ -135,11 +158,11 @@ const showModal = ref(false);
 const router = useRouter();
 
 function navigateToFileInput() {
-router.push("/fileUpload");
+  router.push("/fileUpload");
 }
 
 function navigateToDirectInput() {
-router.push("/directInput");
+  router.push("/directInput");
 }
 
 async function analyzeText() {
@@ -151,12 +174,21 @@ async function analyzeText() {
   isLoading.value = true;
 
   try {
-    const ANALYZE_API_URL = "https://deep-purple-modelapi.onrender.com/analyze";
-    const response = await axios.post(ANALYZE_API_URL, { text: userText.value }, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const ANALYZE_API_URL = "http://localhost:8000/analyze";
+    const response = await axios.post(
+      ANALYZE_API_URL,
+      { text: userText.value },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
-    emotionResult.value = response.data.predictions[0];
+    // Update results from the API response
+    emotionResult.value = response.data.predictions;
+    dominantEmotion.value = response.data.dominant_emotion;
+    summary.value = response.data.summary;
+    insights.value = response.data.insights;
+    suggestedResponse.value = response.data.suggested_response;
     isSaveDisabled.value = false;
   } catch (error) {
     console.error("Error analyzing text:", error);
@@ -180,6 +212,10 @@ async function saveResultToDB() {
       content: userText.value,
       input_type: "text",
       emotion_result: emotionResult.value,
+      dominant_emotion: dominantEmotion.value,
+      summary: summary.value,
+      insights: insights.value,
+      suggested_response: suggestedResponse.value,
     });
     alert("Results saved successfully.");
     isSaveDisabled.value = true;
@@ -215,7 +251,3 @@ const topThreeEmotions = computed(() => {
     .slice(0, 3);
 });
 </script>
-
-<style scoped>
-/* Add only unique styles here that Tailwind cannot handle */
-</style>
