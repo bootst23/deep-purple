@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import requests
@@ -8,6 +9,7 @@ from dotenv import load_dotenv
 import os
 import re
 
+# Load environment variables
 load_dotenv()
 
 # Initialize FastAPI
@@ -31,9 +33,12 @@ model.eval()  # Set the model to evaluation mode
 # Hugging Face API Key 
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  
 
-# Define request model
+# Define request models
 class TextRequest(BaseModel):
     text: str
+
+class BatchTextRequest(BaseModel):
+    texts: List[str]  # List of customer reviews
 
 # Emotion labels for the model
 LABELS = ["sadness", "joy", "love", "anger", "fear", "surprise"] 
@@ -50,26 +55,47 @@ def predict_emotion(text):
     return predictions
 
 # Define function to generate dynamic insights using Hugging Face API
-def generate_dynamic_insights(text, dominant_emotion):
-    prompt = f"""
-    Analyze the following customer review and provide structured insights.
+def generate_dynamic_insights(text, dominant_emotion, is_batch=False):
+    if is_batch:
+        prompt = f"""
+        Analyze the following customer reviews and provide structured insights based on the overall sentiment.
 
-    Customer Review: "{text}"
-    Detected Emotion: {dominant_emotion}
+        Customer Reviews: "{text}"
+        Detected Dominant Emotion: {dominant_emotion}
 
-    Your response should include:
-    1. A short summary of the customer's feelings.
-    2. Three actionable business suggestions based on the sentiment.
-    3. A suggested response the business can send to the customer.
+        Your response should include:
+        1. A short summary of the overall customer sentiment.
+        2. Three actionable business suggestions based on the overall sentiment.
+        3. A suggested response the business can use to address the overall sentiment.
 
-    Format the output as:
-    **Summary:** <summary>
-    **Actionable Insights:**
-    1. <insight 1>
-    2. <insight 2>
-    3. <insight 3>
-    **Suggested Response:** <suggested response>
-    """
+        Format the output as:
+        **Summary:** <summary>
+        **Actionable Insights:**
+        1. <insight 1>
+        2. <insight 2>
+        3. <insight 3>
+        **Suggested Response:** <suggested response>
+        """
+    else:
+        prompt = f"""
+        Analyze the following customer review and provide structured insights.
+
+        Customer Review: "{text}"
+        Detected Emotion: {dominant_emotion}
+
+        Your response should include:
+        1. A short summary of the customer's feelings.
+        2. Three actionable business suggestions based on the sentiment.
+        3. A suggested response the business can send to the customer.
+
+        Format the output as:
+        **Summary:** <summary>
+        **Actionable Insights:**
+        1. <insight 1>
+        2. <insight 2>
+        3. <insight 3>
+        **Suggested Response:** <suggested response>
+        """
 
     headers = {
         "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
@@ -110,6 +136,7 @@ def generate_dynamic_insights(text, dominant_emotion):
             "suggested_response": "Error generating suggested response."
         }
 
+# Endpoint for direct input (individual review analysis)
 @app.post("/analyze")
 async def analyze_text(request: TextRequest):
     try:
@@ -118,7 +145,32 @@ async def analyze_text(request: TextRequest):
         dominant_emotion = sorted_predictions[0]["label"]
 
         # Generate dynamic insights using Hugging Face API
-        dynamic_insights = generate_dynamic_insights(request.text, dominant_emotion)
+        dynamic_insights = generate_dynamic_insights(request.text, dominant_emotion, is_batch=False)
+
+        return {
+            "predictions": predictions,
+            "dominant_emotion": dominant_emotion,
+            "summary": dynamic_insights["summary"],
+            "insights": dynamic_insights["insights"],
+            "suggested_response": dynamic_insights["suggested_response"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint for batch processing (multiple reviews)
+@app.post("/analyze-batch")
+async def analyze_batch_texts(request: BatchTextRequest):
+    try:
+        # Combine all reviews into a single string
+        combined_text = "\n\n".join(request.texts)
+
+        # Analyze the combined text
+        predictions = predict_emotion(combined_text)
+        sorted_predictions = sorted(predictions, key=lambda x: x["score"], reverse=True)
+        dominant_emotion = sorted_predictions[0]["label"]
+
+        # Generate dynamic insights using Hugging Face API
+        dynamic_insights = generate_dynamic_insights(combined_text, dominant_emotion, is_batch=True)
 
         return {
             "predictions": predictions,
