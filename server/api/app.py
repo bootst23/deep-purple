@@ -25,10 +25,10 @@ app.add_middleware(
 )
 
 # Load the fine-tuned Singlish DistilBERT model
-MODEL_PATH = "server/fine_tuned_distilbert_singlish"  # Ensure this is the correct path
+MODEL_PATH = "server/fine_tuned_distilbert_singlish"  
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH, local_files_only=True)
-model.eval()  # Set the model to evaluation mode
+model.eval() 
 
 # Hugging Face API Key 
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  
@@ -43,7 +43,7 @@ class BatchTextRequest(BaseModel):
 # Emotion labels for the model
 LABELS = ["sadness", "joy", "love", "anger", "fear", "surprise"] 
 
-# Define prediction function
+# Generate Emotion Scores
 def predict_emotion(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
@@ -54,7 +54,7 @@ def predict_emotion(text):
     predictions = [{"label": label, "score": score} for label, score in zip(LABELS, scores)]
     return predictions
 
-# Define function to generate dynamic insights using Hugging Face API
+# Generate Summary, Insights, and Suggested Response using Hugging Face API
 def generate_dynamic_insights(text, dominant_emotion, is_batch=False):
     if is_batch:
         prompt = f"""
@@ -105,14 +105,13 @@ def generate_dynamic_insights(text, dominant_emotion, is_batch=False):
     data = {"inputs": prompt}
 
     response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",  # Use the correct model endpoint
+        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",  
         headers=headers,
         json=data
     )
 
     if response.status_code == 200:
         generated_text = response.json()[0]['generated_text']
-        # Remove the prompt from the generated text
         generated_text = generated_text.replace(prompt, "").strip()
         
         # Parse the generated text to extract summary, insights, and suggested response

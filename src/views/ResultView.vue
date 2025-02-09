@@ -105,7 +105,6 @@ import ResultsService from '@/services/ResultsService.js';
 import { Chart, registerables } from 'chart.js';
 
 import {jsPDF} from 'jspdf';
-// Removed unused import for 'html2canvas'
 import { nextTick, onMounted, ref } from 'vue';
 import html2canvas from 'html2canvas';
 Chart.register(...registerables);
@@ -133,8 +132,8 @@ const result = ref<EmotionResult>();
 const emotions = ref<Record<string, number>>({});
 const chart = ref<Chart>();
 const showConfirmModal = ref(false); // State for modals
-const showSuccessModal = ref(false); // State for modals
-const showExportModal = ref(false); // State for modals
+const showSuccessModal = ref(false); 
+const showExportModal = ref(false); 
 
 onMounted(async () => {
   const resultId = parseInt(route.params.resultId as string);
@@ -195,8 +194,8 @@ function renderChart() {
           {
             data,
             backgroundColor: ['#3742fa', '#2ed573', '#ffc0cb', '#ff4c4c', '#ffa502', '#70a1ff'],
-            borderColor: '#fff',  // Optional: add a border to segments
-            borderWidth: 1,       // Optional: set border width
+            borderColor: '#fff',
+            borderWidth: 1, 
           },
         ],
       },
@@ -235,7 +234,6 @@ function exportAsCSV() {
   if (result.value) {
     const csvData = [];
 
-    // Add headers for emotions and additional fields
     csvData.push([
       'File Content',
       'Sadness',
@@ -249,7 +247,6 @@ function exportAsCSV() {
       'Actionable Insights',
     ]);
 
-    // Add data row with emotion scores and other details
     csvData.push([
       result.value.content,
       (emotions.value.sadness * 100).toFixed(1),
@@ -309,7 +306,7 @@ function exportAsPDF() {
     addSection(`Suggested Response: ${result.value.suggested_response || 'No suggestion available.'}`);
     addSection(`Actionable Insights: ${result.value.actionable_insights}`);
 
-    // Add the pie chart
+    // Add pie art
     const chartCanvas = document.getElementById('emotionPieChart') as HTMLCanvasElement;
     html2canvas(chartCanvas).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');

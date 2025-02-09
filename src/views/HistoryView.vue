@@ -100,5 +100,5 @@ export default {
 </script>
 
 <style scoped>
-/* Add only unique styles here that Tailwind cannot handle */
+
 </style>

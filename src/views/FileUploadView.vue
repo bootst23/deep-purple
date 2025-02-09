@@ -307,7 +307,7 @@ async function saveResultToDB() {
     });
     alert("Results saved successfully.");
     isSaveDisabled.value = true;
-    showModal.value = false; // Close the modal after successful save
+    showModal.value = false; 
   } catch (error) {
     console.error("Error saving results:", error);
     alert("Failed to save results. Please try again.");
@@ -361,5 +361,5 @@ const topThreeEmotions = computed(() => {
 </script>
 
 <style scoped>
-/* Add only unique styles here that Tailwind cannot handle */
+
 </style>
