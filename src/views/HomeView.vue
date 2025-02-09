@@ -88,7 +88,7 @@ const analyzeFiles = async () => {
 
   try {
     const response = await axios.post(
-      "https://deep-purple-modelapi.onrender.com/analyze",
+      "http://localhost:8000/analyze",
       { text: textToAnalyze },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -159,31 +159,27 @@ const topThreeEmotions = computed(() =>
 );
 
 async function saveResultToDB() {
-  if (isSaveDisabled.value) {
-    alert("Please analyze a file before saving the results.");
-    return;
-  }
-
-  if (!communicationName.value) {
+  if (!communicationName.value.trim()) {
     alert("Please provide a name for this communication.");
     return;
   }
-  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
+
+  const SAVE_API_URL = "http://localhost:8080/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
-      file_name: fileNames.value.join(", "),
-      content: aggregatedFileContent.value,
-      input_type: "file",
+      file_name: "NA",
+      content: userInput.value,
+      input_type: "text",
       emotion_result: emotionResult.value,
       dominant_emotion: dominantEmotion.value,
       summary: summary.value,
-      insights: insights.value,
+      actionable_insights: insights.value,
       suggested_response: suggestedResponse.value,
     });
     alert("Results saved successfully.");
     isSaveDisabled.value = true;
-    showModal.value = false; // Close the modal after successful save
+    showModal.value = false;
   } catch (error) {
     console.error("Error saving results:", error);
     alert("Failed to save results. Please try again.");
