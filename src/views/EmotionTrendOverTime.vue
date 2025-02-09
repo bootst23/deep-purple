@@ -1,139 +1,275 @@
-<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
-    <div>
-      <h2 class="text-[1.125rem] font-bold text-[#a8a6b3] mb-4">Emotion Trends Over Time</h2>
-      <div class="flex space-x-4 mb-4">
+  <div class="p-8 bg-[#1b172b] min-h-screen text-[#e5e3f0]">
+    <h2 class="text-2xl font-bold text-[#a78bfa] mb-6">Emotion Trends Over Time</h2>
+    
+    <!-- Date and Grouping Controls -->
+    <div class="flex flex-wrap gap-4 mb-6">
+      <div class="flex flex-col">
         <input
           type="date"
           v-model="startDate"
-          class="p-2 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
+          class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7]"
+          @change="handleStartDateChange"
         />
+        <span v-if="dateError" class="text-red-400 text-sm mt-1">{{ dateError }}</span>
+      </div>
+
+      <div class="flex flex-col">
         <input
           type="date"
           v-model="endDate"
-          class="p-2 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
+          :min="startDate"
+          :disabled="!startDate"
+          class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7] disabled:opacity-50"
+          @change="handleEndDateChange"
         />
-        <select
-          v-model="groupBy"
-          class="p-2 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
-        >
-          <option value="day">Daily</option>
-          <option value="week">Weekly</option>
-          <option value="month">Monthly</option>
-        </select>
-        <button
-          class="bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
-          @click="fetchEmotionTrends"
-        >
-          Fetch Trends
-        </button>
       </div>
-  
-      <!-- Emotion Trends Chart -->
-      <div class="bg-[#1e1b29] p-4 rounded-md">
-        <Line :data="chartData" :options="chartOptions" />
-      </div>
+
+      <select
+        v-model="groupBy"
+        class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7]"
+        @change="handleGroupByChange"
+      >
+        <option value="day">Daily</option>
+        <option v-if="dateDifference >= 7" value="week">Weekly</option>
+        <option v-if="dateDifference >= 30" value="month">Monthly</option>
+      </select>
+
+      <button
+        class="bg-[#8a4fff] text-white px-6 py-3 rounded-md hover:bg-[#6f3bbd] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        @click="fetchEmotionTrends"
+        :disabled="!startDate || !endDate || loading"
+      >
+        {{ loading ? 'Loading...' : 'Fetch Trends' }}
+      </button>
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { ref } from "vue";
-  import axios from "axios";
-  import { Line } from "vue-chartjs";
-  import {
-    Chart as ChartJS,
-    Title,
-    Tooltip,
-    Legend,
-    LineElement,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-  } from "chart.js";
-  
-  ChartJS.register(
-    Title,
-    Tooltip,
-    Legend,
-    LineElement,
-    CategoryScale,
-    LinearScale,
-    PointElement
-  );
-  
-  const startDate = ref("");
-  const endDate = ref("");
-  const groupBy = ref("day");
-  interface Trend {
-    date: string;
-    sadness: number;
-    joy: number;
-    anger: number;
-    // Add more emotions as needed
-  }
-  
-  const chartData = ref<{
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      borderColor: string;
-      fill: boolean;
-    }[];
-  }>({
-    labels: [],
-    datasets: [],
-  });
-  
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-  };
-  async function fetchEmotionTrends() {
-    if (!startDate.value || !endDate.value) {
-      alert("Please select a start date and end date.");
-      return;
-    }
-  
-    try {
-      const response = await axios.get("http://localhost:8080/emotion-trends", {
-        params: {
-          start_date: startDate.value,
-          end_date: endDate.value,
-          group_by: groupBy.value,
+
+    <!-- Error Alert -->
+    <div v-if="error" class="mb-6 p-4 bg-red-900/50 border border-red-500 rounded-md text-red-200">
+      {{ error }}
+    </div>
+
+    <!-- Group By Warning -->
+    <div v-if="groupByWarning" class="mb-6 p-4 bg-yellow-900/50 border border-yellow-500 rounded-md text-yellow-200">
+      {{ groupByWarning }}
+    </div>
+
+    <!-- Emotion Trends Chart -->
+    <div class="bg-[#252033] p-6 rounded-md shadow-md h-[600px]" v-if="chartData.datasets.length">
+      <Line :data="chartData" :options="chartOptions" />
+    </div>
+    <div v-else class="bg-[#252033] p-6 rounded-md shadow-md text-center text-[#c3bdd7]">
+      Select a date range and click "Fetch Trends" to view the emotion analysis
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch } from "vue";
+import axios from "axios";
+import { Line } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Filler,
+  type TooltipItem,
+} from "chart.js";
+
+// Register Chart.js components
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Filler
+);
+
+// State variables
+const startDate = ref("");
+const endDate = ref("");
+const groupBy = ref("day");
+const error = ref("");
+const dateError = ref("");
+const groupByWarning = ref("");
+const loading = ref(false);
+
+// Emotion colors configuration
+const emotionColors = {
+  sadness: { border: "#ff6b6b", background: "rgba(255, 107, 107, 0.1)" },
+  joy: { border: "#4dd0e1", background: "rgba(77, 208, 225, 0.1)" },
+  anger: { border: "#ffa726", background: "rgba(255, 167, 38, 0.1)" },
+  fear: { border: "#ab47bc", background: "rgba(171, 71, 188, 0.1)" },
+  surprise: { border: "#29b6f6", background: "rgba(41, 182, 246, 0.1)" }
+};
+
+// Computed date difference in days
+const dateDifference = computed(() => {
+  if (!startDate.value || !endDate.value) return 0;
+  const start = new Date(startDate.value);
+  const end = new Date(endDate.value);
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+});
+
+// Initialize chart data
+const chartData = ref<{
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    borderColor: string;
+    backgroundColor: string;
+    fill: boolean;
+    tension: number;
+    pointRadius: number;
+    pointHoverRadius: number;
+    borderWidth: number;
+  }[];
+}>({
+  labels: [],
+  datasets: [],
+});
+
+// Chart options configuration
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    intersect: false,
+    mode: 'index' as const
+  },
+  plugins: {
+    legend: {
+      labels: {
+        color: "#e5e3f0",
+        font: { size: 14 },
+        usePointStyle: true,
+        pointStyle: 'circle',
+      }
+    },
+    tooltip: {
+      backgroundColor: "#1b172b",
+      titleColor: "#e5e3f0",
+      bodyColor: "#c3bdd7",
+      borderColor: "#6b4fd8",
+      borderWidth: 1,
+      padding: 10,
+      callbacks: {
+        label: (tooltipItem: TooltipItem<"line">) => {
+          const value = tooltipItem.raw as number;
+          return ` ${tooltipItem.dataset.label}: ${value.toFixed(2)}`;
         },
-      });
-  
-      const trends = response.data.emotion_trends;
-  
-      // Update chart data
-      chartData.value = {
-        labels: trends.map((trend: Trend) => trend.date),
-        datasets: [
-          {
-            label: "Sadness",
-            data: trends.map((trend: Trend) => trend.sadness),
-            borderColor: "#FF6384",
-            fill: false,
-          },
-          {
-            label: "Joy",
-            data: trends.map((trend: Trend) => trend.joy),
-            borderColor: "#36A2EB",
-            fill: false,
-          },
-          {
-            label: "Anger",
-            data: trends.map((trend: Trend) => trend.anger),
-            borderColor: "#FFCE56",
-            fill: false,
-          },
-          // Add more emotions as needed
-        ],
-      };
-    } catch (error) {
-      console.error("Error fetching emotion trends:", error);
-      alert("Failed to fetch emotion trends. Please try again.");
+      },
+    },
+  },
+  scales: {
+    x: {
+      ticks: { color: "#e5e3f0" },
+      grid: { color: "#3b3b5e" }
+    },
+    y: {
+      ticks: { color: "#e5e3f0" },
+      grid: { color: "#3b3b5e" },
+      beginAtZero: true
     }
+  },
+};
+
+// Date change handlers
+const handleStartDateChange = () => {
+  dateError.value = "";
+  if (endDate.value && new Date(endDate.value) < new Date(startDate.value)) {
+    endDate.value = startDate.value;
   }
-  </script>
+};
+
+const handleEndDateChange = () => {
+  dateError.value = "";
+  if (new Date(endDate.value) < new Date(startDate.value)) {
+    dateError.value = "End date cannot be earlier than start date";
+    endDate.value = startDate.value;
+  }
+};
+
+// Group by change handler
+const handleGroupByChange = () => {
+  groupByWarning.value = "";
+  if (groupBy.value === "week" && dateDifference.value < 7) {
+    groupBy.value = "day";
+    groupByWarning.value = "Date range too short for weekly grouping. Switched to daily view.";
+  } else if (groupBy.value === "month" && dateDifference.value < 30) {
+    groupBy.value = "day";
+    groupByWarning.value = "Date range too short for monthly grouping. Switched to daily view.";
+  }
+};
+
+// Watch for date changes to validate grouping
+watch([startDate, endDate], () => {
+  if (groupBy.value === "week" && dateDifference.value < 7) {
+    groupBy.value = "day";
+    groupByWarning.value = "Switched to daily view due to short date range.";
+  } else if (groupBy.value === "month" && dateDifference.value < 30) {
+    groupBy.value = "day";
+    groupByWarning.value = "Switched to daily view due to short date range.";
+  }
+});
+
+// Fetch emotion trends
+async function fetchEmotionTrends() {
+  if (!startDate.value || !endDate.value) {
+    error.value = "Please select both start and end dates.";
+    return;
+  }
+
+  loading.value = true;
+  error.value = "";
+  
+  try {
+    const response = await axios.get("http://localhost:8080/emotion-trends", {
+      params: {
+        start_date: startDate.value,
+        end_date: endDate.value,
+        group_by: groupBy.value,
+      },
+    });
+
+    const trends = response.data.emotion_trends;
+
+    // Update chart data
+    chartData.value = {
+      labels: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number }) => trend.date),
+      datasets: Object.entries(emotionColors).map(([emotion, colors]) => ({
+        label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
+        data: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number }) => trend[emotion as keyof typeof trend]),
+        borderColor: colors.border,
+        backgroundColor: colors.background,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      })),
+    };
+  } catch (err) {
+    console.error("Error fetching emotion trends:", err);
+    error.value = "Failed to fetch emotion trends. Please try again.";
+  } finally {
+    loading.value = false;
+  }
+}
+</script>
+
+<style scoped>
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+</style>

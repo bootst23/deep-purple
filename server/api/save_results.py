@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import os
 import psycopg2
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -40,6 +41,7 @@ class SaveRequest(BaseModel):
 @app.post("/save")
 async def save_results(request: SaveRequest):
     try:
+        current_time = datetime.utcnow()
         # Map scores to labels
         scores = {emotion["label"]: emotion["score"] for emotion in request.emotion_result}
 
@@ -93,15 +95,14 @@ async def get_emotion_trends(
 
         # Determine the SQL GROUP BY clause based on the group_by parameter
         if group_by == "week":
-            group_by_clause = "DATE_TRUNC('week', createdAt)"
+            group_by_clause = "DATE_TRUNC('week', \"createdAt\")"
         elif group_by == "month":
-            group_by_clause = "DATE_TRUNC('month', createdAt)"
+            group_by_clause = "DATE_TRUNC('month', \"createdAt\")"
         else:  # Default to day
-            group_by_clause = "DATE(createdAt)"
+            group_by_clause = 'DATE("createdAt")'
 
         # Query the database for emotion trends
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT
                 {group_by_clause} AS date,
                 AVG(sadness_score) AS avg_sadness,
@@ -111,12 +112,11 @@ async def get_emotion_trends(
                 AVG(fear_score) AS avg_fear,
                 AVG(surprise_score) AS avg_surprise
             FROM "Results"
-            WHERE createdAt BETWEEN %s AND %s
+            WHERE "createdAt" BETWEEN %s AND %s
             GROUP BY {group_by_clause}
             ORDER BY {group_by_clause}
-            """,
-            (start_date, end_date)
-        )
+        """
+        cursor.execute(query, (start_date, end_date))
         results = cursor.fetchall()
 
         # Format the results
@@ -142,4 +142,3 @@ async def get_emotion_trends(
 @app.get("/health-check")
 async def health_check():
     return {"message": "Server is running and healthy"}
-

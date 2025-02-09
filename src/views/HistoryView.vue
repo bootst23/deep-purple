@@ -48,11 +48,10 @@ export default {
       this.pastResults = response.data.map((result) => {
         // Find the dominant emotion
         const emotions = {
-          anger: result.anger_score,
-          disgust: result.disgust_score,
-          fear: result.fear_score,
           joy: result.joy_score,
-          neutral: result.neutral_score,
+          love: result.love_score,
+          anger: result.anger_score,
+          fear: result.fear_score,
           sadness: result.sadness_score,
           surprise: result.surprise_score,
         };
@@ -82,9 +81,8 @@ export default {
         surprise: 'bg-[#ffa502]',
         sadness: 'bg-[#3742fa]',
         joy: 'bg-[#2ed573]',
-        neutral: 'bg-[#57606f]',
-        disgust: 'bg-[#6c5ce7]',
-        fear: 'bg-[#70a1ff]',
+        love: 'bg-[#ffc0cb]',
+        fear: 'bg-[#6c5ce7]',
       };
 
       if (emotion in emotionClasses) {

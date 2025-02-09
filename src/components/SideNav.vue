@@ -1,3 +1,4 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { Check, ChevronsUpDown, GalleryVerticalEnd, Search } from 'lucide-vue-next'
 import { ref } from 'vue'
@@ -38,16 +39,22 @@ import {
 const items = [
     {
         value: 'item-1',
-        title: 'History',
+        title: 'Deep Purple',
         content: [
             {
                 title: 'Home',
                 url: '/',
             },
             {
-                title: 'FileUpload',
+                title: 'Detect Emotion',
                 url: '/fileUpload',
-            },
+            },{
+                title: 'History',
+                url: '/history',
+            },{
+                title: 'Summary Analysis',
+                url: '/emotionTrendOverTime',
+            }
         ],
     },
 ]
@@ -90,7 +97,7 @@ const data = {
 
                             <div v-for="contentItem in section.content" :key="contentItem.title"
                                 class="ml-2 px-2 text-white">
-                                <SidebarMenuButton :class="{ 'is-active': contentItem.isActive }" as-child
+                                <SidebarMenuButton as-child
                                     class="block py-1 px-2">
                                     <RouterLink :to="contentItem.url">
                                         {{ contentItem.title }}
