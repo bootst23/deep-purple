@@ -5,6 +5,8 @@ import morgan from 'morgan'
 import { db } from './models/index.js';
 import {port, DB} from './config/config.js';
 import setupRoutes from './routes.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express()
 const { sequelize } = db;

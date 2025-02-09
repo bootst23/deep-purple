@@ -204,7 +204,7 @@ async function saveResultToDB() {
     return;
   }
 
-  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
+  const SAVE_API_URL = "http://localhost:8080/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
@@ -214,7 +214,7 @@ async function saveResultToDB() {
       emotion_result: emotionResult.value,
       dominant_emotion: dominantEmotion.value,
       summary: summary.value,
-      insights: insights.value,
+      actionable_insights: insights.value,
       suggested_response: suggestedResponse.value,
     });
     alert("Results saved successfully.");

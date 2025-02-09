@@ -2,26 +2,24 @@
   <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
     <!-- Navigation Buttons -->
     <button
-          class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToFileInput"
-      >
-          File Input Analyze
-      </button>
-      <button
-          class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-          @click="navigateToDirectInput"
-      >
-          Direct Input Analyze
-      </button>
+      class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToFileInput"
+    >
+      File Input Analyze
+    </button>
+    <button
+      class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
+      @click="navigateToDirectInput"
+    >
+      Direct Input Analyze
+    </button>
     <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
-      <h1 class="text-4xl  font-bold text-white mb-10 text-center">
-      File
-      <span
-        class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300"
-      >
-        Emotion Analysis
-      </span>
-     </h1>
+      <h1 class="text-4xl font-bold text-white mb-10 text-center">
+        File
+        <span class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
+          Emotion Analysis
+        </span>
+      </h1>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Drag and Drop Section -->
         <div
@@ -92,11 +90,30 @@
             </ul>
           </div>
         </div>
+
+        <!-- Summary, Insights, and Suggested Response Section -->
+        <div class="mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
+          <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+          <p class="text-[#c3bdd7]">{{ summary }}</p>
+        </div>
+
+        <div class="mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
+          <ul class="list-disc pl-5 text-[#c3bdd7]">
+            <li v-for="(insight, index) in insights" :key="index">{{ insight }}</li>
+          </ul>
+        </div>
+
+        <div class="mt-6">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
+          <p class="text-[#c3bdd7]">{{ suggestedResponse }}</p>
+        </div>
       </div>
 
       <!-- Save Results Button -->
       <button
-        class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition"
+        class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition mt-6"
         @click="showModal = true"
         :disabled="isSaveDisabled"
       >
@@ -149,7 +166,7 @@ import {
 // Register chart components
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
 
-//Imports for Extractiong Text From PDF File
+// Imports for Extracting Text From PDF File
 import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -157,19 +174,23 @@ GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
 const emotionResult = ref<{ label: string; score: number }[]>([]);
+const dominantEmotion = ref<string>("");
+const summary = ref("");
+const insights = ref<string[]>([]);
+const suggestedResponse = ref("");
 const isLoading = ref(false);
 const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
-const communicationName = ref(""); 
+const communicationName = ref("");
 const showModal = ref(false);
 const router = useRouter();
 
 function navigateToFileInput() {
-router.push("/fileUpload");
+  router.push("/fileUpload");
 }
 
 function navigateToDirectInput() {
-router.push("/directInput");
+  router.push("/directInput");
 }
 
 function handleFileChange(event: Event) {
@@ -239,12 +260,19 @@ async function analyzeFiles() {
   isLoading.value = true;
 
   try {
-    const ANALYZE_API_URL = "https://deep-purple-modelapi.onrender.com/analyze";
-    const response = await axios.post(ANALYZE_API_URL, { text: aggregatedFileContent.value }, {
+    const endpoint = selectedFiles.value.length === 1 ? "/analyze" : "/analyze-batch";
+    const ANALYZE_API_URL = `http://localhost:8000${endpoint}`;
+    const payload = selectedFiles.value.length === 1 ? { text: aggregatedFileContent.value } : { texts: [aggregatedFileContent.value] };
+
+    const response = await axios.post(ANALYZE_API_URL, payload, {
       headers: { "Content-Type": "application/json" },
     });
 
-    emotionResult.value = response.data.predictions[0];
+    emotionResult.value = response.data.predictions;
+    dominantEmotion.value = response.data.dominant_emotion;
+    summary.value = response.data.summary;
+    insights.value = response.data.insights.split("\n");
+    suggestedResponse.value = response.data.suggested_response;
     isSaveDisabled.value = false;
   } catch (error) {
     console.error("Error analyzing files:", error);
@@ -253,7 +281,6 @@ async function analyzeFiles() {
     isLoading.value = false;
   }
 }
-
 
 async function saveResultToDB() {
   if (isSaveDisabled.value) {
@@ -265,7 +292,7 @@ async function saveResultToDB() {
     alert("Please provide a name for this communication.");
     return;
   }
-  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
+  const SAVE_API_URL = "http://localhost:8080/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
@@ -273,6 +300,10 @@ async function saveResultToDB() {
       content: aggregatedFileContent.value,
       input_type: "file",
       emotion_result: emotionResult.value,
+      dominant_emotion: dominantEmotion.value,
+      summary: summary.value,
+      actionable_insights: insights.value.join("\n"),
+      suggested_response: suggestedResponse.value,
     });
     alert("Results saved successfully.");
     isSaveDisabled.value = true;

@@ -1,5 +1,4 @@
 //import { FLOAT } from "sequelize";
-
 export default (sequelize, DataTypes) => {
     const Results = sequelize.define('Results', {
         name: {
@@ -11,27 +10,44 @@ export default (sequelize, DataTypes) => {
         input_type: {
             type: DataTypes.STRING,
         },
-        anger_score: {
-            type: DataTypes.FLOAT,
-        },
-        disgust_score: {
-            type: DataTypes.FLOAT,
-        },
-        fear_score: {
+        sadness_score: {
             type: DataTypes.FLOAT,
         },
         joy_score: {
             type: DataTypes.FLOAT,
         },
-        neutral_score: {
+        love_score: {
             type: DataTypes.FLOAT,
         },
-        sadness_score: {
+        anger_score: {
+            type: DataTypes.FLOAT,
+        },
+        fear_score: {
             type: DataTypes.FLOAT,
         },
         surprise_score: {
             type: DataTypes.FLOAT,
-        }
+        },
+        dominant_emotion: {
+            type: DataTypes.STRING,
+        },
+        summary: {
+            type: DataTypes.TEXT,
+        },
+        actionable_insights: {
+            type: DataTypes.TEXT,
+        },
+        suggested_response: {
+            type: DataTypes.TEXT,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
     });
     return Results; // Return the defined model
 };

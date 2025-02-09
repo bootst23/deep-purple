@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue'
 import HistoryView from '../views/HistoryView.vue'
 import ResultView from '@/views/ResultView.vue'
 import DirectInputView from '@/views/DirectInputView.vue'
+import EmotionTrendOverTime from '@/views/EmotionTrendOverTime.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,6 +47,11 @@ const router = createRouter({
       path: '/directInput',
       name: 'directInput',
       component: DirectInputView
+    },
+    {
+      path: '/emotionTrendOverTime',
+      name: 'emotionTrendOverTime',
+      component: EmotionTrendOverTime
     }
 
     
