@@ -42,7 +42,7 @@ npm run lint
 ## To start the server, run these lines in your terminal 
 
 ```sh
-npm run lint
+npm start
 ```
 
 ```sh
