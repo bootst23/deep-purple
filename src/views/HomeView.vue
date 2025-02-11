@@ -189,6 +189,7 @@ async function saveResultToDB() {
 
 </script>
 
+
 <template>
   <h1 class="text-4xl md:text-6xl font-bold text-white mb-2 text-center">
     Welcome to
@@ -200,109 +201,102 @@ async function saveResultToDB() {
     Your Emotional Detection AI
   </p>
 
-  <!-- Results Section -->
-  <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
-    <h2 class="text-lg font-bold text-white">Emotion Results</h2>
+  <!-- NEW: Wrap Results Section in a width-constraining container -->
+  <div class="max-w-4xl mx-auto">
+    <!-- Results Section -->
+    <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
+      <h2 class="text-lg font-bold text-white">Emotion Results</h2>
 
-    <!-- Pie Chart -->
-    <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 300px;" />
+      <!-- Pie Chart -->
+      <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 300px;" />
 
-    <!-- Summary Section -->
-    <div class="text-white text-md mt-4">
-      <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
-      <ul class="list-disc ml-5">
-        <li v-for="(emotion, index) in topThreeEmotions" :key="index">
-          {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
-        </li>
-      </ul>
-    </div>
-
-    <!-- Summary Section -->
-    <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
-      <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
-      <p class="text-[#c3bdd7] text-[1.125rem]">
-        <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
-        {{ summary }}
-      </p>
-    </div>
-
-    <!-- Insights Section -->
-    <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
-      <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
-      <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
-    </div>
-
-    <!-- Suggested Response Section -->
-    <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
-      <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
-      <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
-    </div>
-
-    <div class="flex justify-center gap-8 mt-4 m-4" style="min-height: 50px;">
-      <!-- Save Results Button -->
-      <button class="flex-1 bg-[#2ed573] text-white px-2 py-2 rounded-md hover:bg-[#27c56e] transition text-center"
-        @click="showModal = true" :disabled="isSaveDisabled">
-        Save Results
-      </button>
-
-      <!-- Save Chart as PDF Button -->
-      <button class="flex-1 bg-blue-500 text-white px-2 py-2 rounded-md hover:bg-blue-600 text-center"
-        @click="saveChartAsPDF">
-        Save as PDF
-      </button>
-
-      <!-- Input Details Button -->
-      <button class="flex-1 bg-gray-600 text-white px-2 py-2 rounded-md hover:bg-gray-700 transition text-center"
-        @click="showInputDetails = !showInputDetails">
-        {{ showInputDetails ? "Hide Input Details" : "Input Details" }}
-      </button>
-    </div>
-
-
-
-    <!-- Save Results Modal -->
-    <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
-        <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
-        <input type="text" v-model="communicationName" placeholder="Enter a name..."
-          class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]" />
-        <div class="flex justify-end space-x-4">
-          <button class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]" @click="showModal = false">
-            Cancel
-          </button>
-          <button class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]" @click="saveResultToDB">
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Text Input or File List -->
-    <div v-if="showInputDetails" class="mt-4 p-3 bg-gray-900 rounded-md text-white">
-      <h3 class="text-lg font-bold mb-2">Input Details:</h3>
-
-      <!-- Show Text Input if Manually Entered -->
-      <div v-if="userInput.trim()">
-        <p class="whitespace-pre-wrap">{{ userInput }}</p>
-      </div>
-
-      <!-- Show File List if Files Were Uploaded -->
-      <div v-else-if="fileNames.length > 0">
-        <ul>
-          <li v-for="(file, index) in fileNames" :key="index">
-            <button @click="toggleFileContent(index)" class="text-blue-400 hover:underline">
-              {{ file }}
-            </button>
-            <p v-if="expandedFileIndex === index" class="mt-2 p-2 bg-gray-700 rounded-md">
-              {{ fileContents[index] }}
-            </p>
+      <!-- Top 3 Emotions Section -->
+      <div class="text-white text-md mt-4">
+        <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
+        <ul class="list-disc ml-5">
+          <li v-for="(emotion, index) in topThreeEmotions" :key="index">
+            {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
           </li>
         </ul>
       </div>
+
+      <!-- Modified: Summary Section (reduced padding/margin) -->
+      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
+        <p class="text-[#c3bdd7] text-[1.125rem]">
+          <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+          {{ summary }}
+        </p>
+      </div>
+
+      <!-- Modified: Insights Section (reduced padding/margin) -->
+      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
+        <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
+      </div>
+
+      <!-- Modified: Suggested Response Section (reduced padding/margin) -->
+      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
+        <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
+      </div>
+
+      <!-- Modified: Flex Container for Buttons (removed extra m-4) -->
+      <div class="flex justify-center gap-8 mt-4" style="min-height: 50px;">
+        <button class="flex-1 bg-[#2ed573] text-white px-2 py-2 rounded-md hover:bg-[#27c56e] transition text-center"
+          @click="showModal = true" :disabled="isSaveDisabled">
+          Save Results
+        </button>
+
+        <button class="flex-1 bg-blue-500 text-white px-2 py-2 rounded-md hover:bg-blue-600 text-center"
+          @click="saveChartAsPDF">
+          Save as PDF
+        </button>
+
+        <button class="flex-1 bg-gray-600 text-white px-2 py-2 rounded-md hover:bg-gray-700 transition text-center"
+          @click="showInputDetails = !showInputDetails">
+          {{ showInputDetails ? "Hide Input Details" : "Input Details" }}
+        </button>
+      </div>
+
+      <!-- Save Results Modal -->
+      <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
+          <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
+          <input type="text" v-model="communicationName" placeholder="Enter a name..."
+            class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]" />
+          <div class="flex justify-end space-x-4">
+            <button class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]" @click="showModal = false">
+              Cancel
+            </button>
+            <button class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]" @click="saveResultToDB">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Details Section -->
+      <div v-if="showInputDetails" class="mt-4 p-3 bg-gray-900 rounded-md text-white">
+        <h3 class="text-lg font-bold mb-2">Input Details:</h3>
+        <div v-if="userInput.trim()">
+          <p class="whitespace-pre-wrap">{{ userInput }}</p>
+        </div>
+        <div v-else-if="fileNames.length > 0">
+          <ul>
+            <li v-for="(file, index) in fileNames" :key="index">
+              <button @click="toggleFileContent(index)" class="text-blue-400 hover:underline">
+                {{ file }}
+              </button>
+              <p v-if="expandedFileIndex === index" class="mt-2 p-2 bg-gray-700 rounded-md">
+                {{ fileContents[index] }}
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
-
-
 
   <form class="w-full max-w-md space-y-4" @submit.prevent="analyzeFiles">
     <!-- File Names Display -->
@@ -336,7 +330,6 @@ async function saveResultToDB() {
           </svg>
         </span>
       </Button>
-
     </div>
   </form>
 </template>
