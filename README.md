@@ -37,3 +37,18 @@ npm run build
 ```sh
 npm run lint
 ```
+
+
+## To start the server, run these lines in your terminal 
+
+```sh
+npm run lint
+```
+
+```sh
+uvicorn server.api.save_results:app --host 0.0.0.0 --port 8080
+```
+
+```sh
+uvicorn server.api.app:app --host 0.0.0.0 --port 8000
+```
