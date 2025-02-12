@@ -202,13 +202,13 @@ async function saveResultToDB() {
   </p>
 
   <!-- NEW: Wrap Results Section in a width-constraining container -->
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-2xl mx-auto">
     <!-- Results Section -->
     <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
       <h2 class="text-lg font-bold text-white">Emotion Results</h2>
 
       <!-- Pie Chart -->
-      <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 300px;" />
+      <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 100px;" />
 
       <!-- Top 3 Emotions Section -->
       <div class="text-white text-md mt-4">
