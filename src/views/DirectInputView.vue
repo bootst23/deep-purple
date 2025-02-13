@@ -26,13 +26,23 @@
       </h1>
 
       <!-- Text Input Section -->
-      <div>
+      <!-- <div>
         <h2 class="text-[1.125rem] font-bold text-[#a8a6b3] mb-4">Enter Text</h2>
         <textarea
           v-model="userText"
           class="w-full p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] resize-none h-52"
           placeholder="Enter your text here..."
         ></textarea>
+      </div> -->
+
+      <div>
+        <h2 class="text-[1.125rem] font-bold text-[#a8a6b3] mb-4">Enter Text</h2>
+        <div
+          ref="highlightedText"
+          class="w-full p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] h-52 overflow-auto whitespace-pre-wrap border border-[#a692cc]"
+          contenteditable="true"
+          @input="syncUserText"
+        ></div>
       </div>
 
       <div class="flex justify-end mt-4">
@@ -112,7 +122,7 @@
 
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import axios from "axios";
 import { Pie } from "vue-chartjs";
 import {
@@ -126,13 +136,20 @@ import {
 // Register chart components
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
 
-const userText = ref<string>("");
-const emotionResult = ref<{ label: string; score: number }[]>([]);
+//const userText = ref<string>("");
+//const emotionResult = ref<{ label: string; score: number }[]>([]);
+// new model output should just be an object
+const emotionResult = ref({});
+// not just a string anymore
+const userText = ref("");
+
 const isLoading = ref(false);
 const isSaveDisabled = ref(true);
 const communicationName = ref("");
 const showModal = ref(false);
 const router = useRouter();
+
+const highlightedText = ref(null);
 
 function navigateToFileInput() {
 router.push("/fileUpload");
@@ -156,7 +173,8 @@ async function analyzeText() {
       headers: { "Content-Type": "application/json" },
     });
 
-    emotionResult.value = response.data.predictions[0];
+    //emotionResult.value = response.data.predictions[0];
+    emotionResult.value = response.data.emotion_influence;
     isSaveDisabled.value = false;
   } catch (error) {
     console.error("Error analyzing text:", error);
@@ -183,6 +201,8 @@ async function saveResultToDB() {
     });
     alert("Results saved successfully.");
     isSaveDisabled.value = true;
+    await nextTick();
+    highlightTokens();
     showModal.value = false;
   } catch (error) {
     console.error("Error saving results:", error);
@@ -190,30 +210,81 @@ async function saveResultToDB() {
   }
 }
 
-const pieData = computed(() => {
-  const labels = emotionResult.value.map((item) => item.label);
-  const data = emotionResult.value.map((item) => Number((item.score * 100).toFixed(2)));
-  const backgroundColor = [
-    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#8DD3C7",
-  ];
+// const pieData = computed(() => {
+//   const labels = emotionResult.value.map((item) => item.label);
+//   const data = emotionResult.value.map((item) => Number((item.score * 100).toFixed(2)));
+//   const backgroundColor = [
+//     "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#8DD3C7",
+//   ];
 
-  return {
-    labels,
-    datasets: [
-      {
-        data,
-        backgroundColor,
-      },
-    ],
-  };
+//   return {
+//     labels,
+//     datasets: [
+//       {
+//         data,
+//         backgroundColor,
+//       },
+//     ],
+//   };
+// });
+
+const pieData = computed(() => {
+  const labels = Object.keys(emotionResult.value);
+  const data = Object.values(emotionResult.value).map(items => 
+    items.reduce((sum, item) => sum + item.score, 0)
+  );
+  return { labels, datasets: [{ data, backgroundColor }] };
 });
 
+// const topThreeEmotions = computed(() => {
+//   return emotionResult.value
+//     .slice()
+//     .sort((a, b) => b.score - a.score)
+//     .slice(0, 3);
+// });
 const topThreeEmotions = computed(() => {
-  return emotionResult.value
-    .slice()
+  if (!emotionResult.value || Object.keys(emotionResult.value).length === 0) return [];
+
+  return Object.entries(emotionResult.value)
+    .map(([emotion, tokens]) => ({
+      emotion,
+      // Sum of token influence scores
+      score: tokens.reduce((sum, item) => sum + item.score, 0)
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 });
+
+function highlightTokens() {
+  if (!highlightedText.value) return;
+
+  let text = userText.value;
+  for (const [emotion, tokens] of Object.entries(emotionResult.value)) {
+    tokens.forEach(({ token }) => {
+      const color = getEmotionColor(emotion);
+      const regex = new RegExp(`\\b${token}\\b`, "gi");
+      text = text.replace(regex, `<span style="background-color: ${color}; padding: 2px 4px; border-radius: 4px;">${token}</span>`);
+    });
+  }
+}
+
+function syncUserText(event) {
+  userText.value = event.target.innerText;
+}
+
+function getEmotionColor(emotion) {
+  const emotionColors = {
+    Joy: "#FFD700",
+    Sadness: "#6495ED",
+    Anger: "#FF4500",
+    Fear: "#800080",
+    Surprise: "#FFA500",
+    Disgust: "#228B22",
+    Neutral: "#C0C0C0"
+  };
+  return emotionColors[emotion] || "#FFFFFF";
+}
+
 </script>
 
 <style scoped>

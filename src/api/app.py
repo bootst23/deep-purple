@@ -29,7 +29,22 @@ async def analyze_text(request: TextRequest):
         predictions = classifier(request.text)
 
         #return results
-        return {"predictions": predictions}
+        #return {"predictions": predictions}
+
+        # Model updated so new response data and format
+        emotion_scores = {pred["label"]: pred["score"] for pred in predictions[0]}
+        predicted_emotion = max(emotion_scores, key=emotion_scores.get)
+        
+        # Token influence (dominant emotion for each individual token)
+        emotion_influence = {emotion: [] for emotion in emotion_scores.keys()}
+
+        # Construct response
+        response = {
+            "predicted_emotion": predicted_emotion,
+            "emotion_influence": emotion_influence
+        }
+
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
