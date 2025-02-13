@@ -17,12 +17,12 @@ export async function post(req, res) {
 export async function index(req, res) {
     try {
         const result = await Results.findAll({
-            limit: 10                     //Return all results in the database
+            order: [['createdAt', 'DESC']]  // Most recent timestamps first
         })
         res.send(result)
     } catch (err) {
         res.status(500).send({
-            error: 'Error Occured Getting Results.'
+            error: 'Error Occurred Getting Results.'
         });
     }
 }

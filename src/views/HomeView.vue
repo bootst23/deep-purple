@@ -92,7 +92,7 @@ const analyzeFiles = async () => {
     );
     
     emotionResult.value = response.data.predictions;
-    dominantEmotion.value = response.data.dominant_emotion;
+    dominantEmotion.value = response.data.predicted_emotion;
     summary.value = response.data.summary;
     insights.value = response.data.insights;
     suggestedResponse.value = response.data.suggested_response;

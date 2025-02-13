@@ -269,7 +269,7 @@ async function analyzeFiles() {
     });
 
     emotionResult.value = response.data.predictions;
-    dominantEmotion.value = response.data.dominant_emotion;
+    dominantEmotion.value = response.data.predicted_emotion;
     summary.value = response.data.summary;
     insights.value = response.data.insights.split("\n");
     suggestedResponse.value = response.data.suggested_response;
@@ -305,6 +305,7 @@ async function saveResultToDB() {
       actionable_insights: insights.value.join("\n"),
       suggested_response: suggestedResponse.value,
     });
+    console.log(emotionResult.value);
     alert("Results saved successfully.");
     isSaveDisabled.value = true;
     showModal.value = false; 

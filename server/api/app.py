@@ -109,7 +109,7 @@ def get_influential_tokens(sentence):
         "emotion_influence": {
             emotion: tokens[:5] for emotion, tokens in emotion_influence.items()
         },
-        "raw_predictions": raw_predictions
+        "predictions": raw_predictions
     }
 
 def generate_dynamic_insights(text, emotion_data, is_batch=False):
@@ -190,7 +190,7 @@ def generate_dynamic_insights(text, emotion_data, is_batch=False):
             "suggested_response": "Error generating suggested response."
         }
 
-@app.get("/analyze")
+@app.post("/analyze")
 async def analyze_text(request: TextRequest):
     try:
         emotion_data = get_influential_tokens(request.text)
@@ -205,7 +205,7 @@ async def analyze_text(request: TextRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/analyze-batch")
+@app.post("/analyze-batch")
 async def analyze_batch_texts(request: BatchTextRequest):
     try:
         combined_text = "\n\n".join(request.texts)

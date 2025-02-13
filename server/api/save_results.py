@@ -42,16 +42,30 @@ class SaveRequest(BaseModel):
 async def save_results(request: SaveRequest):
     try:
         current_time = datetime.utcnow()
-        # Map scores to labels
-        scores = {emotion["label"]: emotion["score"] for emotion in request.emotion_result}
-
-        # Extract emotion scores with default value 0 if not present
-        sadness_score = scores.get("sadness", 0)
-        joy_score = scores.get("joy", 0)
-        love_score = scores.get("love", 0)
-        anger_score = scores.get("anger", 0)
-        fear_score = scores.get("fear", 0)
-        surprise_score = scores.get("surprise", 0)
+        
+        # Initialize emotion scores with default value 0
+        emotion_scores = {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0
+        }
+        
+        # Update emotion scores based on the emotion_result
+        for emotion in request.emotion_result:
+            label = emotion["label"].lower()  # Ensure the label is lowercase to match the keys
+            if label in emotion_scores:
+                emotion_scores[label] = emotion["score"]
+        
+        # Extract emotion scores
+        sadness_score = emotion_scores["sadness"]
+        joy_score = emotion_scores["joy"]
+        love_score = emotion_scores["love"]
+        anger_score = emotion_scores["anger"]
+        fear_score = emotion_scores["fear"]
+        surprise_score = emotion_scores["surprise"]
 
         cursor.execute(
             """
@@ -80,7 +94,6 @@ async def save_results(request: SaveRequest):
         conn.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/emotion-trends")
 async def get_emotion_trends(
