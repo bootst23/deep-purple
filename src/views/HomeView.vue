@@ -46,7 +46,7 @@ const readFilesContent = async () => {
     });
 
     fileContents.value.push(content);
-    aggregatedFileContent.value += content + "\n\n"; // Append content
+    aggregatedFileContent.value += content + "\n\n";
   }
 };
 
@@ -66,10 +66,8 @@ const handleFileChange = (event: Event) => {
   }
 };
 
-// Analyze files or text input
 const analyzeFiles = async () => {
   if (userInput.value.trim()) {
-    // If the user inputs text, clear file-related data
     selectedFiles.value = [];
     fileNames.value = [];
     fileContents.value = [];
@@ -92,7 +90,7 @@ const analyzeFiles = async () => {
       { text: textToAnalyze },
       { headers: { "Content-Type": "application/json" } }
     );
-    // Update results from the API response
+    
     emotionResult.value = response.data.predictions;
     dominantEmotion.value = response.data.dominant_emotion;
     summary.value = response.data.summary;
@@ -108,7 +106,6 @@ const analyzeFiles = async () => {
 };
 
 
-// Save pie chart as PDF
 const saveChartAsPDF = async () => {
   const chartElement = document.querySelector(".pie-chart-container") as HTMLElement; // Type assertion
   if (!chartElement) {
@@ -127,11 +124,11 @@ const saveChartAsPDF = async () => {
     const canvasHeight = canvas.height;
 
     // Calculate aspect ratio for the PDF page
-    const pdfWidth = 190; // Adjust based on PDF width
-    const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth; // Maintain aspect ratio
+    const pdfWidth = 190;
+    const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth;
 
     pdf.text("Emotion Analysis Results", 10, 10);
-    pdf.addImage(imgData, "PNG", 10, 20, pdfWidth, pdfHeight); // Use dynamic dimensions
+    pdf.addImage(imgData, "PNG", 10, 20, pdfWidth, pdfHeight);
     pdf.save("emotion-analysis-results.pdf");
   } catch (error) {
     console.error("Error saving PDF:", error);
@@ -140,7 +137,6 @@ const saveChartAsPDF = async () => {
 };
 
 
-// Pie chart data
 const pieData = computed(() => ({
   labels: emotionResult.value.map((item) => item.label),
   datasets: [
@@ -201,16 +197,13 @@ async function saveResultToDB() {
     Your Emotional Detection AI
   </p>
 
-  <!-- NEW: Wrap Results Section in a width-constraining container -->
+
   <div class="max-w-2xl mx-auto">
-    <!-- Results Section -->
     <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
       <h2 class="text-lg font-bold text-white">Emotion Results</h2>
 
-      <!-- Pie Chart -->
       <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 100px;" />
 
-      <!-- Top 3 Emotions Section -->
       <div class="text-white text-md mt-4">
         <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
         <ul class="list-disc ml-5">
@@ -220,7 +213,6 @@ async function saveResultToDB() {
         </ul>
       </div>
 
-      <!-- Modified: Summary Section (reduced padding/margin) -->
       <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
         <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
         <p class="text-[#c3bdd7] text-[1.125rem]">
@@ -229,19 +221,16 @@ async function saveResultToDB() {
         </p>
       </div>
 
-      <!-- Modified: Insights Section (reduced padding/margin) -->
       <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
         <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
         <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
       </div>
 
-      <!-- Modified: Suggested Response Section (reduced padding/margin) -->
       <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
         <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
         <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
       </div>
 
-      <!-- Modified: Flex Container for Buttons (removed extra m-4) -->
       <div class="flex justify-center gap-8 mt-4" style="min-height: 50px;">
         <button class="flex-1 bg-[#2ed573] text-white px-2 py-2 rounded-md hover:bg-[#27c56e] transition text-center"
           @click="showModal = true" :disabled="isSaveDisabled">
@@ -299,26 +288,21 @@ async function saveResultToDB() {
   </div>
 
   <form class="w-full max-w-md space-y-4" @submit.prevent="analyzeFiles">
-    <!-- File Names Display -->
     <div v-if="fileNames.length > 0" class="text-sm text-gray-400">
       Selected Files: <span class="font-medium text-gray-200">{{ fileNames.join(", ") }}</span>
     </div>
 
     <div class="flex items-center gap-2">
-      <!-- Input Text -->
       <div class="relative flex-grow">
         <Input type="text" placeholder="Type your text or upload files..." class="w-full pr-16" v-model="userInput" />
-        <!-- File Button -->
         <button type="button"
           class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white px-2 py-1 rounded-md hover:bg-gray-200 transition"
           @click="$refs.fileInput.click()">
           📎
         </button>
-        <!-- Hidden File Input -->
         <input type="file" id="fileInput" ref="fileInput" class="hidden" @change="handleFileChange" multiple />
       </div>
 
-      <!-- Analyze Button -->
       <Button type="submit" variant="secondary"
         class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md flex items-center justify-center"
         :disabled="isLoading">
