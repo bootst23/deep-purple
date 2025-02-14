@@ -19,18 +19,65 @@ const isLoading = ref(false);
 const showModal = ref(false);
 const communicationName = ref("");
 const isSaveDisabled = ref(true);
-const showInputDetails = ref(false); // Toggle input details section
-const expandedFileIndex = ref<number | null>(null); // Track expanded file
-const fileContents = ref<string[]>([]); // Store file contents
-const dominantEmotion = ref<string>(""); // Holds the dominant emotion
-const summary = ref<string>(""); // Holds the summary
-const insights = ref<string>(""); // Holds actionable insights
-const suggestedResponse = ref<string>(""); // Holds the suggested response
+const showInputDetails = ref(false);
+const expandedFileIndex = ref<number | null>(null);
+const fileContents = ref<string[]>([]);
+const dominantEmotion = ref<string>("");
+const summary = ref<string>("");
+const insights = ref<string>("");
+const suggestedResponse = ref<string>("");
+const showDownloadDropdown = ref(false);
 
-// Modify readFilesContent to store file contents for display
+
+const toggleDownloadDropdown = () => {
+  showDownloadDropdown.value = !showDownloadDropdown.value;
+};
+
+
+function downloadCSV() {
+  if (!emotionResult.value.length) {
+    alert("No data available to download.");
+    return;
+  }
+
+  // Prepare CSV content
+  let csvContent = "data:text/csv;charset=utf-8,";
+
+
+  if (fileContents.value.length > 0) {
+    csvContent += `File Content\n"${fileContents.value.join("\n\n")}"\n\n`;
+  } else {
+    csvContent += `User Input\n"${userInput.value}"\n\n`;
+  }
+
+
+  csvContent += "Emotion,Score (%)\n";
+  emotionResult.value.forEach(({ label, score }) => {
+    csvContent += `${label},${(score * 100).toFixed(2)}\n`;
+  });
+
+
+  csvContent += `\nDominant Emotion,${dominantEmotion.value}\n`;
+  csvContent += `Summary,"${summary.value}"\n`;
+  csvContent += `Actionable Insights,"${insights.value}"\n`;
+  csvContent += `Suggested Response,"${suggestedResponse.value}"\n`;
+
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "emotion_analysis_results.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+
+
 const readFilesContent = async () => {
-  aggregatedFileContent.value = ""; // Reset content
-  fileContents.value = []; // Reset file contents
+  aggregatedFileContent.value = "";
+  fileContents.value = [];
 
   for (const file of selectedFiles.value) {
     const content = await new Promise<string>((resolve, reject) => {
@@ -50,18 +97,17 @@ const readFilesContent = async () => {
   }
 };
 
-// Toggle file content visibility
+
 const toggleFileContent = (index: number) => {
   expandedFileIndex.value = expandedFileIndex.value === index ? null : index;
 };
 
-// Handle file change
 const handleFileChange = (event: Event) => {
   const files = Array.from((event.target as HTMLInputElement).files || []);
   if (files.length > 0) {
     selectedFiles.value = files;
     fileNames.value = files.map((file) => file.name);
-    userInput.value = ""; // Clear text input when a file is uploaded
+    userInput.value = "";
     readFilesContent();
   }
 };
@@ -90,7 +136,7 @@ const analyzeFiles = async () => {
       { text: textToAnalyze },
       { headers: { "Content-Type": "application/json" } }
     );
-    
+
     emotionResult.value = response.data.predictions;
     dominantEmotion.value = response.data.predicted_emotion;
     summary.value = response.data.summary;
@@ -106,35 +152,44 @@ const analyzeFiles = async () => {
 };
 
 
-const saveChartAsPDF = async () => {
-  const chartElement = document.querySelector(".pie-chart-container") as HTMLElement; // Type assertion
-  if (!chartElement) {
-    alert("Pie chart not found!");
+const saveResultsAsPDF = async () => {
+  const resultsElement = document.querySelector(".results-container") as HTMLElement;
+  if (!resultsElement) {
+    alert("Results section not found!");
     return;
   }
 
   try {
-    const canvas = await html2canvas(chartElement);
+    const canvas = await html2canvas(resultsElement, {
+      scale: 3,
+      useCORS: true,
+      scrollY: 0, // Prevent viewport cutting
+    });
+
     const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-    const pdf = new jsPDF();
 
-    // Get canvas dimensions
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Calculate aspect ratio for the PDF page
-    const pdfWidth = 190;
-    const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth;
 
-    pdf.text("Emotion Analysis Results", 10, 10);
-    pdf.addImage(imgData, "PNG", 10, 20, pdfWidth, pdfHeight);
+    const pageHeight = 297;
+    let position = 0;
+
+    while (position < imgHeight) {
+      pdf.addImage(imgData, "PNG", 0, position * -1, imgWidth, imgHeight);
+      position += pageHeight;
+      if (position < imgHeight) pdf.addPage();
+    }
+
     pdf.save("emotion-analysis-results.pdf");
   } catch (error) {
     console.error("Error saving PDF:", error);
     alert("Failed to save the PDF. Please try again.");
   }
 };
+
 
 
 const pieData = computed(() => ({
@@ -200,35 +255,37 @@ async function saveResultToDB() {
 
   <div class="max-w-2xl mx-auto">
     <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
-      <h2 class="text-lg font-bold text-white">Emotion Results</h2>
+      <div class="results-container p-4 rounded-md shadow-md">
+        <h2 class="text-lg font-bold text-white">Emotion Results</h2>
 
-      <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 100px;" />
+        <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 100px;" />
 
-      <div class="text-white text-md mt-4">
-        <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
-        <ul class="list-disc ml-5">
-          <li v-for="(emotion, index) in topThreeEmotions" :key="index">
-            {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
-          </li>
-        </ul>
-      </div>
+        <div class="text-white text-md mt-4">
+          <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
+          <ul class="list-disc ml-5">
+            <li v-for="(emotion, index) in topThreeEmotions" :key="index">
+              {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
+            </li>
+          </ul>
+        </div>
 
-      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
-        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
-        <p class="text-[#c3bdd7] text-[1.125rem]">
-          <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
-          {{ summary }}
-        </p>
-      </div>
+        <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">
+            <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+            {{ summary }}
+          </p>
+        </div>
 
-      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
-        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
-        <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
-      </div>
+        <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
+        </div>
 
-      <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
-        <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
-        <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
+        <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
+          <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
+        </div>
       </div>
 
       <div class="flex justify-center gap-8 mt-4" style="min-height: 50px;">
@@ -237,10 +294,25 @@ async function saveResultToDB() {
           Save Results
         </button>
 
-        <button class="flex-1 bg-blue-500 text-white px-2 py-2 rounded-md hover:bg-blue-600 text-center"
-          @click="saveChartAsPDF">
-          Save as PDF
-        </button>
+
+        <div class="relative flex-1">
+          <button class="w-full bg-blue-500 text-white px-4 py-4 rounded-md hover:bg-blue-600 transition text-center"
+            @click="toggleDownloadDropdown">
+            Download Results
+          </button>
+
+
+          <div v-if="showDownloadDropdown"
+            class="absolute bottom-full mb-2 w-full bg-[#2b223c] py-4 text-white rounded-md shadow-lg z-10">
+            <button @click="downloadCSV" class="block w-full px-4 py-4 text-left hover:bg-[#3d2f4a] transition">
+              Download as CSV
+            </button>
+            <button @click="saveResultsAsPDF" class="block w-full px-4 py-4 text-left hover:bg-[#3d2f4a] transition">
+              Download as PDF
+            </button>
+
+          </div>
+        </div>
 
         <button class="flex-1 bg-gray-600 text-white px-2 py-2 rounded-md hover:bg-gray-700 transition text-center"
           @click="showInputDetails = !showInputDetails">
@@ -248,7 +320,7 @@ async function saveResultToDB() {
         </button>
       </div>
 
-      <!-- Save Results Modal -->
+
       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
           <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
@@ -265,7 +337,7 @@ async function saveResultToDB() {
         </div>
       </div>
 
-      <!-- Input Details Section -->
+
       <div v-if="showInputDetails" class="mt-4 p-3 bg-gray-900 rounded-md text-white">
         <h3 class="text-lg font-bold mb-2">Input Details:</h3>
         <div v-if="userInput.trim()">
