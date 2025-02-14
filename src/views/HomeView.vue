@@ -27,7 +27,7 @@ const summary = ref<string>("");
 const insights = ref<string>("");
 const suggestedResponse = ref<string>("");
 const showDownloadDropdown = ref(false);
-
+const showSuccessModal = ref(false);
 
 const toggleDownloadDropdown = () => {
   showDownloadDropdown.value = !showDownloadDropdown.value;
@@ -219,16 +219,24 @@ async function saveResultToDB() {
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
-      file_name: "NA",
-      content: userInput.value,
-      input_type: "text",
+      file_name: fileNames.value.join(", "),
+      content: userInput.value.trim() || aggregatedFileContent.value.trim(),
+      input_type: selectedFiles.value.length > 0 ? "file" : "text",
       emotion_result: emotionResult.value,
       dominant_emotion: dominantEmotion.value,
       summary: summary.value,
       actionable_insights: insights.value,
       suggested_response: suggestedResponse.value,
     });
-    alert("Results saved successfully.");
+
+    // Show Success Modal
+    showSuccessModal.value = true;
+
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+      showSuccessModal.value = false;
+    }, 3000);
+
     isSaveDisabled.value = true;
     showModal.value = false;
   } catch (error) {
@@ -236,8 +244,6 @@ async function saveResultToDB() {
     alert("Failed to save results. Please try again.");
   }
 }
-
-
 </script>
 
 
@@ -334,6 +340,20 @@ async function saveResultToDB() {
               Save
             </button>
           </div>
+        </div>
+      </div>
+
+      <div v-if="showSuccessModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-[#2b223c] p-6 rounded-lg shadow-lg text-center w-80">
+          <div class="text-white flex flex-col items-center">
+            <div class="text-4xl mb-2">✅</div>
+            <h2 class="text-lg font-bold">Success!</h2>
+            <p class="text-[#c3bdd7]">Results saved successfully.</p>
+          </div>
+          <button class="mt-4 bg-[#6c5ce7] text-white px-4 py-2 rounded-md hover:bg-[#4b39a2] transition"
+            @click="showSuccessModal = false">
+            OK
+          </button>
         </div>
       </div>
 
