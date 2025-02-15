@@ -167,11 +167,11 @@ function capitalize(word: string) {
 function getEmotionClass(emotion: string) {
   const classes: { [key: string]: string } = {
     anger: 'bg-[#ff4c4c]',
-    surprise: 'bg-[#ffa502]',
+    surprise: 'bg-[#70a1ff]',
     sadness: 'bg-[#3742fa]',
     joy: 'bg-[#2ed573]',
     love: 'bg-[#ffc0cb]',
-    fear: 'bg-[#70a1ff]',
+    fear: 'bg-[#ffa502]',
   };
   return classes[emotion] || 'bg-gray-500';
 }
