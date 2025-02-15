@@ -17,7 +17,7 @@ setupRoutes(app);
 
 
 sequelize.sync().then(() =>{
-    app.listen(8081 || `https://deep-purple-modelapi.onrender.com`)
+    app.listen(8081 || `https://deep-purple-server.onrender.com`)
     console.log(`Server Started on ${port}`)
     console.log(DB.password)
 })
