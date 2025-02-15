@@ -4,9 +4,11 @@
       <h1 class="text-2xl font-bold text-[#d3bafc]">History</h1>
       <p class="text-base text-[#a8a6b3]">View all past sentiment analysis results in one place.</p>
     </header>
+
+    <!-- Results Grid -->
     <div class="flex-1 flex flex-wrap gap-5 justify-center items-center">
       <div
-        v-for="result in pastResults"
+        v-for="result in paginatedResults"
         :key="result.id"
         class="bg-[#2b223c] rounded-lg shadow-lg w-72 p-5 cursor-pointer transition duration-300 ease-in-out flex flex-col justify-between hover:translate-y-[-5px] hover:shadow-2xl"
         @click="navigateTo({
@@ -29,6 +31,27 @@
         </div>
       </div>
     </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-center items-center mt-8 space-x-4">
+      <button
+        class="bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
+        @click="previousPage"
+        :disabled="currentPage === 1"
+      >
+        Previous
+      </button>
+      <span class="text-[#c3bdd7]">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+      <button
+        class="bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
+        @click="nextPage"
+        :disabled="currentPage === totalPages"
+      >
+        Next
+      </button>
+    </div>
   </div>
 </template>
 
@@ -40,6 +63,8 @@ export default {
   data() {
     return {
       pastResults: null as { id: number; name: string; createdAt: string; input_type: string; majorEmotion: string }[] | null,
+      currentPage: 1, // Current page number
+      itemsPerPage: 6, // Number of items per page
     };
   },
   async mounted() {
@@ -74,6 +99,20 @@ export default {
       console.error('Error fetching results:', error);
     }
   },
+  computed: {
+    // Calculate total number of pages
+    totalPages() {
+      if (!this.pastResults) return 0;
+      return Math.ceil(this.pastResults.length / this.itemsPerPage);
+    },
+    // Get results for the current page
+    paginatedResults() {
+      if (!this.pastResults) return [];
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.pastResults.slice(start, end);
+    },
+  },
   methods: {
     getEmotionClass(emotion: string) {
       const emotionClasses: { [key: string]: string } = {
@@ -95,10 +134,23 @@ export default {
     navigateTo(route: RouteLocationRaw) {
       this.$router.push(route);
     },
+
+    // Pagination methods
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-
+/* Add any custom styles here */
 </style>

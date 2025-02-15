@@ -99,7 +99,8 @@ async def save_results(request: SaveRequest):
 async def get_emotion_trends(
     start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
     end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
-    group_by: str = Query("day", description="Group by day, week, or month")
+    group_by: str = Query("day", description="Group by day, week, or month"),
+    emotions: str = Query(None, description="Comma-separated list of emotions to filter by")
 ):
     try:
         # Convert start_date and end_date to datetime objects
@@ -114,43 +115,97 @@ async def get_emotion_trends(
         else:  # Default to day
             group_by_clause = 'DATE("createdAt")'
 
-        # Query the database for emotion trends
+        # Convert emotions string to list
+        selected_emotions = emotions.split(',') if emotions else []
+
+        # Query to count the frequency of each dominant emotion per time period
         query = f"""
-            SELECT
-                {group_by_clause} AS date,
-                AVG(sadness_score) AS avg_sadness,
-                AVG(joy_score) AS avg_joy,
-                AVG(love_score) AS avg_love,
-                AVG(anger_score) AS avg_anger,
-                AVG(fear_score) AS avg_fear,
-                AVG(surprise_score) AS avg_surprise
-            FROM "Results"
-            WHERE "createdAt" BETWEEN %s AND %s
-            GROUP BY {group_by_clause}
-            ORDER BY {group_by_clause}
+            WITH emotion_counts AS (
+                SELECT 
+                    {group_by_clause} AS date,
+                    dominant_emotion,
+                    COUNT(*) AS emotion_count,
+                    COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY {group_by_clause}) AS percentage
+                FROM "Results"
+                WHERE "createdAt" BETWEEN %s AND %s
+                {'AND dominant_emotion IN %s' if selected_emotions else ''}
+                GROUP BY {group_by_clause}, dominant_emotion
+            ),
+            all_dates AS (
+                SELECT DISTINCT {group_by_clause} AS date
+                FROM "Results"
+                WHERE "createdAt" BETWEEN %s AND %s
+            ),
+            all_emotions AS (
+                SELECT DISTINCT dominant_emotion
+                FROM "Results"
+                WHERE "createdAt" BETWEEN %s AND %s
+                {'AND dominant_emotion IN %s' if selected_emotions else ''}
+            ),
+            date_emotion_matrix AS (
+                SELECT 
+                    d.date,
+                    e.dominant_emotion,
+                    COALESCE(ec.percentage, 0) as percentage
+                FROM all_dates d
+                CROSS JOIN all_emotions e
+                LEFT JOIN emotion_counts ec 
+                    ON d.date = ec.date 
+                    AND e.dominant_emotion = ec.dominant_emotion
+            )
+            SELECT 
+                date,
+                dominant_emotion,
+                percentage
+            FROM date_emotion_matrix
+            ORDER BY date, dominant_emotion;
         """
-        cursor.execute(query, (start_date, end_date))
+        
+        # Execute the query with parameters
+        if selected_emotions:
+            cursor.execute(query, (start_date, end_date, tuple(selected_emotions), start_date, end_date, start_date, end_date, tuple(selected_emotions)))
+        else:
+            cursor.execute(query, (start_date, end_date, start_date, end_date, start_date, end_date))
+
         results = cursor.fetchall()
+
+        # Process results into the required format
+        emotion_data = {}
+        dates = []
+        current_date = None
+
+        for row in results:
+            date = row[0].strftime("%Y-%m-%d")
+            emotion = row[1].lower()  # Convert emotion to lowercase
+            percentage = float(row[2])
+
+            if date not in dates:
+                dates.append(date)
+
+            if emotion not in emotion_data:
+                emotion_data[emotion] = []
+            
+            emotion_data[emotion].append(percentage)
 
         # Format the results
         emotion_trends = [
             {
-                "date": row[0].strftime("%Y-%m-%d"),
-                "sadness": row[1],
-                "joy": row[2],
-                "love": row[3],
-                "anger": row[4],
-                "fear": row[5],
-                "surprise": row[6],
+                "date": date,
+                "sadness": emotion_data.get("sadness", [0] * len(dates))[i],
+                "joy": emotion_data.get("joy", [0] * len(dates))[i],
+                "anger": emotion_data.get("anger", [0] * len(dates))[i],
+                "fear": emotion_data.get("fear", [0] * len(dates))[i],
+                "surprise": emotion_data.get("surprise", [0] * len(dates))[i],
+                "love": emotion_data.get("love", [0] * len(dates))[i]
             }
-            for row in results
+            for i, date in enumerate(dates)
         ]
 
         return {"emotion_trends": emotion_trends}
     except Exception as e:
+        print(f"Error in get_emotion_trends: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
+        
 # Health-check endpoint
 @app.get("/health-check")
 async def health_check():

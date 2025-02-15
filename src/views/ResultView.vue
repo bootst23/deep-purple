@@ -5,63 +5,91 @@
       <p class="text-[#a8a6b3]">Emotion Analysis Result</p>
     </header>
 
-
+    <!-- Text Content Section -->
     <div
       class="bg-[#2b223c] rounded-lg p-5 mb-5 max-h-[300px] overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words">
       <h3 class="mb-2 text-[#d3bafc]">Text Content</h3>
       <p class="text-base text-[#c3bdd7] m-0">{{ result.content }}</p>
     </div>
 
+    <!-- Top Three Predicted Emotions Section -->
+    <div class="bg-[#2b223c] rounded-lg p-5 mb-5">
+      <h3 class="text-lg font-bold text-[#d3bafc] mb-4">Top Three Predicted Emotions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div
+          v-for="(emotion, index) in topThreeEmotions"
+          :key="index"
+          class="p-4 rounded-md"
+          :style="{ backgroundColor: getEmotionClass(emotion.label).backgroundColor + '20' }"
+        >
+          <div class="flex items-center">
+            <span class="text-2xl mr-2">
+              {{ getEmotionClass(emotion.label).emoji }}
+            </span>
+            <div>
+              <h3 class="text-lg font-bold text-white">{{ capitalize(emotion.label) }}</h3>
+              <p class="text-md text-gray-400">{{ (emotion.score * 100).toFixed(1) }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Analysis Result Section -->
     <h2 class="text-xl font-bold">Analysis Result</h2>
     <div class="bg-[#2b223c] rounded-lg flex flex-wrap gap-8 mt-5 mb-8 py-5">
-
       <div class="flex-1 text-center">
         <h3 class="text-lg font-bold text-[#d3bafc]">Emotion Scores</h3>
         <div class="pl-8 pt-8 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-6">
-          <div v-for="(score, emotion) in emotions" :key="emotion"
-            class="w-44 h-24 p-4 rounded-lg text-center text-white font-bold" :class="getEmotionClass(emotion)">
+          <div
+            v-for="(score, emotion) in emotions"
+            :key="emotion"
+            class="w-44 h-24 p-4 rounded-lg text-center text-white font-bold"
+            :class="getEmotionColorClass(emotion)"
+          >
             <p class="text-base font-semibold">{{ capitalize(emotion) }}</p>
             <p class="text-base">{{ (score * 100).toFixed(1) }}%</p>
           </div>
         </div>
       </div>
 
-
+      <!-- Emotion Distribution Chart -->
       <div class="flex-[0.8] text-center">
         <h3 class="text-lg font-bold text-[#d3bafc]">Emotion Distribution</h3>
         <canvas id="emotionPieChart" class="max-w-full max-h-[500px] pt-8"></canvas>
       </div>
     </div>
 
-
+    <!-- Summary Section -->
     <div class="bg-[#2b223c] rounded-lg p-5 mb-5">
       <h3 class="text-lg font-bold text-[#d3bafc]">Summary</h3>
       <p class="text-[#c3bdd7]">{{ result.summary }}</p>
     </div>
 
-
+    <!-- Suggested Response Section -->
     <div class="bg-[#2b223c] rounded-lg p-5 mb-5">
       <h3 class="text-lg font-bold text-[#d3bafc]">Suggested Response</h3>
       <p class="text-[#c3bdd7]">{{ result.suggested_response || 'No suggestion available.' }}</p>
     </div>
 
-
+    <!-- Actionable Insights Section -->
     <div class="bg-[#2b223c] rounded-lg p-5 mb-5">
       <h3 class="text-lg font-bold text-[#d3bafc]">Actionable Insights</h3>
       <p class="text-[#c3bdd7]">{{ result.actionable_insights }}</p>
     </div>
 
-
+    <!-- Buttons Section -->
     <button
       class="w-72 bg-[#6c5ce7] text-white mr-2 rounded-lg px-5 py-2.5 text-base font-bold cursor-pointer transition duration-300 hover:bg-[#4b39a2]"
-      @click="openExportModal">
+      @click="openExportModal"
+    >
       Export
     </button>
 
     <button
       class="w-72 bg-[#ff2b2b] text-white rounded-lg px-5 py-2.5 text-base font-bold cursor-pointer transition duration-300 hover:bg-[#a23939]"
-      @click="showDeleteConfirmation">
+      @click="showDeleteConfirmation"
+    >
       Delete
     </button>
 
@@ -104,10 +132,10 @@ import { useResultStore } from '@/stores/result';
 import { useRoute, useRouter } from 'vue-router';
 import ResultsService from '@/services/ResultsService.js';
 import { Chart, registerables } from 'chart.js';
-
 import { jsPDF } from 'jspdf';
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref, computed } from 'vue';
 import html2canvas from 'html2canvas';
+
 Chart.register(...registerables);
 
 const route = useRoute();
@@ -132,13 +160,12 @@ interface EmotionResult {
 const result = ref<EmotionResult>();
 const emotions = ref<Record<string, number>>({});
 const chart = ref<Chart>();
-const showConfirmModal = ref(false); // State for modals
+const showConfirmModal = ref(false);
 const showSuccessModal = ref(false);
 const showExportModal = ref(false);
 
 onMounted(async () => {
   const resultId = parseInt(route.params.resultId as string);
-  // Fetching the emotion result from the API
   try {
     const res = await ResultsService.show(resultId);
     resultStore.setResult(res.data);
@@ -160,11 +187,32 @@ onMounted(async () => {
   }
 });
 
+// Calculate top three emotions
+const topThreeEmotions = computed(() => {
+  return Object.entries(emotions.value)
+    .map(([label, score]) => ({ label, score }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+});
+
 function capitalize(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 function getEmotionClass(emotion: string) {
+  const classes: { [key: string]: { backgroundColor: string; emoji: string } } = {
+    anger: { backgroundColor: '#ff4c4c', emoji: '😡' },
+    surprise: { backgroundColor: '#70a1ff', emoji: '😲' },
+    sadness: { backgroundColor: '#3742fa', emoji: '😢' },
+    joy: { backgroundColor: '#2ed573', emoji: '😊' },
+    love: { backgroundColor: '#ffc0cb', emoji: '❤️' },
+    fear: { backgroundColor: '#ffa502', emoji: '😨' },
+  };
+  return classes[emotion] || { backgroundColor: '#808080', emoji: '❓' };
+}
+
+// New function for Emotion Scores section
+function getEmotionColorClass(emotion: string) {
   const classes: { [key: string]: string } = {
     anger: 'bg-[#ff4c4c]',
     surprise: 'bg-[#70a1ff]',

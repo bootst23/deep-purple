@@ -4,7 +4,6 @@ import FileUploadView from '../views/FileUploadView.vue'
 import LoginView from '../views/LoginView.vue'
 import HistoryView from '../views/HistoryView.vue'
 import ResultView from '@/views/ResultView.vue'
-import DirectInputView from '@/views/DirectInputView.vue'
 import EmotionTrendOverTime from '@/views/EmotionTrendOverTime.vue'
 
 const router = createRouter({
@@ -42,11 +41,6 @@ const router = createRouter({
       path: '/history/:resultId',
       name: 'result',
       component: ResultView
-    },
-    {
-      path: '/directInput',
-      name: 'directInput',
-      component: DirectInputView
     },
     {
       path: '/emotionTrendOverTime',

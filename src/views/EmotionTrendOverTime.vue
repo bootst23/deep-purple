@@ -3,40 +3,69 @@
     <h2 class="text-2xl font-bold text-[#a78bfa] mb-6">Emotion Trends Over Time</h2>
     
     <!-- Date and Grouping Controls -->
-    <div class="flex flex-wrap gap-4 mb-6">
-      <div class="flex flex-col">
-        <input
-          type="date"
-          v-model="startDate"
-          class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7]"
-          @change="handleStartDateChange"
-        />
-        <span v-if="dateError" class="text-red-400 text-sm mt-1">{{ dateError }}</span>
+    <div class="flex flex-col gap-6 mb-6">
+      <!-- Date Range Inputs -->
+      <div class="flex flex-wrap gap-4">
+        <div class="flex flex-col">
+          <label class="text-[#c3bdd7] mb-1">Start Date</label>
+          <input
+            type="date"
+            v-model="startDate"
+            class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7] focus:outline-none focus:border-[#8a4fff]"
+            @change="handleStartDateChange"
+          />
+          <span v-if="dateError" class="text-red-400 text-sm mt-1">{{ dateError }}</span>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-[#c3bdd7] mb-1">End Date</label>
+          <input
+            type="date"
+            v-model="endDate"
+            :min="startDate"
+            :disabled="!startDate"
+            class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7] focus:outline-none focus:border-[#8a4fff] disabled:opacity-50"
+            @change="handleEndDateChange"
+          />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-[#c3bdd7] mb-1">Group By</label>
+          <select
+            v-model="groupBy"
+            class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7] focus:outline-none focus:border-[#8a4fff]"
+            @change="handleGroupByChange"
+          >
+            <option value="day">Daily</option>
+            <option v-if="dateDifference >= 7" value="week">Weekly</option>
+            <option v-if="dateDifference >= 30" value="month">Monthly</option>
+          </select>
+        </div>
       </div>
 
-      <div class="flex flex-col">
-        <input
-          type="date"
-          v-model="endDate"
-          :min="startDate"
-          :disabled="!startDate"
-          class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7] disabled:opacity-50"
-          @change="handleEndDateChange"
-        />
+      <!-- Emotion Selection Checkboxes -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[#c3bdd7]">Select Emotions:</label>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          <label
+            v-for="(emotion, key) in emotionColors"
+            :key="key"
+            class="flex items-center gap-2 p-2 border border-[#6b4fd8] rounded-md bg-[#2d223e] hover:bg-[#3b2f4d] transition cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              v-model="selectedEmotions"
+              :value="key"
+              class="accent-[#8a4fff]"
+            />
+            <span class="text-[#c3bdd7]">{{ key.charAt(0).toUpperCase() + key.slice(1) }}</span>
+          </label>
+        </div>
       </div>
 
-      <select
-        v-model="groupBy"
-        class="p-3 border border-[#6b4fd8] rounded-md bg-[#2d223e] text-[#c3bdd7]"
-        @change="handleGroupByChange"
-      >
-        <option value="day">Daily</option>
-        <option v-if="dateDifference >= 7" value="week">Weekly</option>
-        <option v-if="dateDifference >= 30" value="month">Monthly</option>
-      </select>
-
+      <!-- Fetch Trends Button -->
       <button
-        class="bg-[#8a4fff] text-white px-6 py-3 rounded-md hover:bg-[#6f3bbd] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        class="bg-[#8a4fff] text-white px-6 py-3 rounded-md hover:bg-[#6f3bbd] transition disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto"
         @click="fetchEmotionTrends"
         :disabled="!startDate || !endDate || loading"
       >
@@ -97,6 +126,7 @@ ChartJS.register(
 const startDate = ref("");
 const endDate = ref("");
 const groupBy = ref("day");
+const selectedEmotions = ref<string[]>([]);
 const error = ref("");
 const dateError = ref("");
 const groupByWarning = ref("");
@@ -104,11 +134,12 @@ const loading = ref(false);
 
 // Emotion colors configuration
 const emotionColors = {
-  sadness: { border: "#ff6b6b", background: "rgba(255, 107, 107, 0.1)" },
-  joy: { border: "#4dd0e1", background: "rgba(77, 208, 225, 0.1)" },
-  anger: { border: "#ffa726", background: "rgba(255, 167, 38, 0.1)" },
-  fear: { border: "#ab47bc", background: "rgba(171, 71, 188, 0.1)" },
-  surprise: { border: "#29b6f6", background: "rgba(41, 182, 246, 0.1)" }
+  sadness: { border: "#1e90ff", background: "rgba(30, 144, 255, 0.1)" }, // Blue
+  joy: { border: "#ffd700", background: "rgba(255, 215, 0, 0.1)" }, // Yellow
+  love: { border: "#ff69b4", background: "rgba(255, 105, 180, 0.1)" }, // Pink
+  anger: { border: "#ff4500", background: "rgba(255, 69, 0, 0.1)" }, // Red
+  fear: { border: "#800080", background: "rgba(128, 0, 128, 0.1)" }, // Purple
+  surprise: { border: "#ffa500", background: "rgba(255, 165, 0, 0.1)" }, // Orange
 };
 
 // Computed date difference in days
@@ -165,7 +196,7 @@ const chartOptions = {
       callbacks: {
         label: (tooltipItem: TooltipItem<"line">) => {
           const value = tooltipItem.raw as number;
-          return ` ${tooltipItem.dataset.label}: ${value.toFixed(2)}`;
+          return `${tooltipItem.dataset.label}: ${value.toFixed(2)}`;
         },
       },
     },
@@ -238,6 +269,7 @@ async function fetchEmotionTrends() {
         start_date: startDate.value,
         end_date: endDate.value,
         group_by: groupBy.value,
+        emotions: selectedEmotions.value.join(','), // Pass selected emotions to the backend
       },
     });
 
@@ -245,18 +277,20 @@ async function fetchEmotionTrends() {
 
     // Update chart data
     chartData.value = {
-      labels: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number }) => trend.date),
-      datasets: Object.entries(emotionColors).map(([emotion, colors]) => ({
-        label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
-        data: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number }) => trend[emotion as keyof typeof trend]),
-        borderColor: colors.border,
-        backgroundColor: colors.background,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        borderWidth: 2,
-      })),
+      labels: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number; love: number }) => trend.date),
+      datasets: Object.entries(emotionColors)
+        .filter(([emotion]) => selectedEmotions.value.length === 0 || selectedEmotions.value.includes(emotion))
+        .map(([emotion, colors]) => ({
+          label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
+          data: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number; love: number }) => trend[emotion as keyof typeof trend]),
+          borderColor: colors.border,
+          backgroundColor: colors.background,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        })),
     };
   } catch (err) {
     console.error("Error fetching emotion trends:", err);
