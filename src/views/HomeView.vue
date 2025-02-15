@@ -29,10 +29,20 @@ const suggestedResponse = ref<string>("");
 const showDownloadDropdown = ref(false);
 const showSuccessModal = ref(false);
 
+// Emotion-specific emojis and colors
+const emotionConfig = {
+  Sadness: { emoji: "😢", color: "#36A2EB" }, // Blue
+  Joy: { emoji: "😊", color: "#FFCE56" }, // Yellow
+  Love: { emoji: "❤️", color: "#FF6384" }, // Red
+  Anger: { emoji: "😡", color: "#FF9F40" }, // Orange
+  Fear: { emoji: "😨", color: "#9966FF" }, // Purple
+  Surprise: { emoji: "😲", color: "#4BC0C0" }, // Teal
+};
+
+// Fallback for undefined emotions
 const toggleDownloadDropdown = () => {
   showDownloadDropdown.value = !showDownloadDropdown.value;
 };
-
 
 function downloadCSV() {
   if (!emotionResult.value.length) {
@@ -40,9 +50,7 @@ function downloadCSV() {
     return;
   }
 
-  // Prepare CSV content
   let csvContent = "data:text/csv;charset=utf-8,";
-
 
   if (fileContents.value.length > 0) {
     csvContent += `File Content\n"${fileContents.value.join("\n\n")}"\n\n`;
@@ -50,18 +58,15 @@ function downloadCSV() {
     csvContent += `User Input\n"${userInput.value}"\n\n`;
   }
 
-
   csvContent += "Emotion,Score (%)\n";
   emotionResult.value.forEach(({ label, score }) => {
     csvContent += `${label},${(score * 100).toFixed(2)}\n`;
   });
 
-
   csvContent += `\nDominant Emotion,${dominantEmotion.value}\n`;
   csvContent += `Summary,"${summary.value}"\n`;
   csvContent += `Actionable Insights,"${insights.value}"\n`;
   csvContent += `Suggested Response,"${suggestedResponse.value}"\n`;
-
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
@@ -71,9 +76,6 @@ function downloadCSV() {
   link.click();
   document.body.removeChild(link);
 }
-
-
-
 
 const readFilesContent = async () => {
   aggregatedFileContent.value = "";
@@ -97,7 +99,6 @@ const readFilesContent = async () => {
   }
 };
 
-
 const toggleFileContent = (index: number) => {
   expandedFileIndex.value = expandedFileIndex.value === index ? null : index;
 };
@@ -118,7 +119,6 @@ const analyzeFiles = async () => {
     fileNames.value = [];
     fileContents.value = [];
     aggregatedFileContent.value = "";
-
   }
 
   const textToAnalyze = userInput.value.trim() || aggregatedFileContent.value.trim();
@@ -151,7 +151,6 @@ const analyzeFiles = async () => {
   }
 };
 
-
 const saveResultsAsPDF = async () => {
   const resultsElement = document.querySelector(".results-container") as HTMLElement;
   if (!resultsElement) {
@@ -163,16 +162,14 @@ const saveResultsAsPDF = async () => {
     const canvas = await html2canvas(resultsElement, {
       scale: 3,
       useCORS: true,
-      scrollY: 0, // Prevent viewport cutting
+      scrollY: 0,
     });
 
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
 
-
     const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
 
     const pageHeight = 297;
     let position = 0;
@@ -190,14 +187,12 @@ const saveResultsAsPDF = async () => {
   }
 };
 
-
-
 const pieData = computed(() => ({
   labels: emotionResult.value.map((item) => item.label),
   datasets: [
     {
       data: emotionResult.value.map((item) => item.score * 100),
-      backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
+      backgroundColor: emotionResult.value.map((item) => emotionConfig[item.label as keyof typeof emotionConfig].color),
     },
   ],
 }));
@@ -229,10 +224,8 @@ async function saveResultToDB() {
       suggested_response: suggestedResponse.value,
     });
 
-    // Show Success Modal
     showSuccessModal.value = true;
 
-    // Auto-close after 3 seconds
     setTimeout(() => {
       showSuccessModal.value = false;
     }, 3000);
@@ -246,7 +239,6 @@ async function saveResultToDB() {
 }
 </script>
 
-
 <template>
   <h1 class="text-4xl md:text-6xl font-bold text-white mb-2 text-center">
     Welcome to
@@ -258,55 +250,130 @@ async function saveResultToDB() {
     Your Emotional Detection AI
   </p>
 
+  <!-- Input Form -->
+  <form class="w-full max-w-md space-y-4" @submit.prevent="analyzeFiles">
+    <div v-if="fileNames.length > 0" class="text-sm text-gray-400">
+      Selected Files: <span class="font-medium text-gray-200">{{ fileNames.join(", ") }}</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div class="relative flex-grow">
+        <Input type="text" placeholder="Type your text or upload files..." class="w-full pr-16" v-model="userInput" />
+        <button type="button"
+          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white px-2 py-1 rounded-md hover:bg-gray-200 transition"
+          @click="$refs.fileInput.click()">
+          📎
+        </button>
+        <input type="file" id="fileInput" ref="fileInput" class="hidden" @change="handleFileChange" multiple />
+      </div>
+
+      <Button type="submit" variant="secondary"
+        class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md flex items-center justify-center"
+        :disabled="isLoading">
+        <span v-if="!isLoading">Analyze</span>
+        <span v-else>
+          <svg class="animate-spin h-5 w-5 text-white ml-2 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </span>
+      </Button>
+    </div>
+  </form>
 
   <div class="max-w-2xl mx-auto">
     <div v-if="emotionResult.length > 0" class="mt-6 mb-4 bg-gray-800 p-4 rounded-lg shadow-md pie-chart-container">
       <div class="results-container p-4 rounded-md shadow-md">
         <h2 class="text-lg font-bold text-white">Emotion Results</h2>
 
-        <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 100px;" />
-
-        <div class="text-white text-md mt-4">
-          <h3 class="font-bold mb-2">Top 3 Emotions:</h3>
-          <ul class="list-disc ml-5">
-            <li v-for="(emotion, index) in topThreeEmotions" :key="index">
-              {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
-            </li>
-          </ul>
+        <!-- Dominant Emotion Card -->
+        <div
+          class="bg-[#1e1b29] p-6 rounded-md mb-4"
+          :style="{ backgroundColor: emotionConfig[dominantEmotion as keyof typeof emotionConfig].color + '20' }"
+        >
+          <div class="flex items-center justify-center">
+            <span class="text-4xl mr-4">
+              {{ emotionConfig[dominantEmotion as keyof typeof emotionConfig].emoji }}
+            </span>
+            <div>
+              <h3 class="text-2xl font-bold text-white">{{ dominantEmotion }}</h3>
+              <p class="text-lg text-gray-400">
+                {{ ((emotionResult.find(e => e.label === dominantEmotion)?.score ?? 0) * 100).toFixed(2) }}%
+              </p>
+            </div>
+          </div>
         </div>
 
+        <!-- Related Emotions -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div
+            v-for="(emotion, index) in topThreeEmotions.slice(1)"
+            :key="index"
+            class="p-4 rounded-md"
+            :style="{ backgroundColor: emotionConfig[emotion.label as keyof typeof emotionConfig].color + '20' }"
+          >
+            <div class="flex items-center">
+              <span class="text-2xl mr-2">
+                {{ emotionConfig[emotion.label as keyof typeof emotionConfig].emoji }}
+              </span>
+              <div>
+                <h3 class="text-lg font-bold text-white">{{ emotion.label }}</h3>
+                <p class="text-md text-gray-400">{{ (emotion.score * 100).toFixed(2) }}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pie Chart with Title -->
         <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Emotion Distribution</h3>
+          <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: true }" style="height: 200px;" />
+        </div>
+
+        <!-- Summary -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
-          <p class="text-[#c3bdd7] text-[1.125rem]">
-            <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
-            {{ summary }}
-          </p>
+          <div class="bg-[#2b223c] p-4 rounded-md">
+            <p class="text-[#c3bdd7] text-[1.125rem] leading-relaxed">
+              <strong class="text-purple-300">Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+              {{ summary }}
+            </p>
+          </div>
         </div>
 
-        <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+        <!-- Actionable Insights -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
-          <p class="text-[#c3bdd7] text-[1.125rem]">{{ insights }}</p>
+          <div class="bg-[#2b223c] p-4 rounded-md">
+            <p class="text-[#c3bdd7] text-[1.125rem] leading-relaxed">
+              {{ insights }}
+            </p>
+          </div>
         </div>
 
-        <div class="bg-[#1e1b29] p-4 rounded-md mt-4">
+        <!-- Suggested Response -->
+        <div class="bg-[#1e1b29] p-6 rounded-md mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
-          <p class="text-[#c3bdd7] text-[1.125rem]">{{ suggestedResponse }}</p>
+          <div class="bg-[#2b223c] p-4 rounded-md">
+            <p class="text-[#c3bdd7] text-[1.125rem] leading-relaxed">
+              {{ suggestedResponse }}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div class="flex justify-center gap-8 mt-4" style="min-height: 50px;">
+      <!-- Buttons for Save, Download, and Input Details -->
+      <div class="flex justify-center gap-8 mt-6" style="min-height: 50px;">
         <button class="flex-1 bg-[#2ed573] text-white px-2 py-2 rounded-md hover:bg-[#27c56e] transition text-center"
           @click="showModal = true" :disabled="isSaveDisabled">
           Save Results
         </button>
-
 
         <div class="relative flex-1">
           <button class="w-full bg-blue-500 text-white px-4 py-4 rounded-md hover:bg-blue-600 transition text-center"
             @click="toggleDownloadDropdown">
             Download Results
           </button>
-
 
           <div v-if="showDownloadDropdown"
             class="absolute bottom-full mb-2 w-full bg-[#2b223c] py-4 text-white rounded-md shadow-lg z-10">
@@ -316,7 +383,6 @@ async function saveResultToDB() {
             <button @click="saveResultsAsPDF" class="block w-full px-4 py-4 text-left hover:bg-[#3d2f4a] transition">
               Download as PDF
             </button>
-
           </div>
         </div>
 
@@ -326,7 +392,7 @@ async function saveResultToDB() {
         </button>
       </div>
 
-
+      <!-- Modals for Save and Success -->
       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
           <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
@@ -357,7 +423,7 @@ async function saveResultToDB() {
         </div>
       </div>
 
-
+      <!-- Input Details Section -->
       <div v-if="showInputDetails" class="mt-4 p-3 bg-gray-900 rounded-md text-white">
         <h3 class="text-lg font-bold mb-2">Input Details:</h3>
         <div v-if="userInput.trim()">
@@ -379,33 +445,5 @@ async function saveResultToDB() {
     </div>
   </div>
 
-  <form class="w-full max-w-md space-y-4" @submit.prevent="analyzeFiles">
-    <div v-if="fileNames.length > 0" class="text-sm text-gray-400">
-      Selected Files: <span class="font-medium text-gray-200">{{ fileNames.join(", ") }}</span>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <div class="relative flex-grow">
-        <Input type="text" placeholder="Type your text or upload files..." class="w-full pr-16" v-model="userInput" />
-        <button type="button"
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white px-2 py-1 rounded-md hover:bg-gray-200 transition"
-          @click="$refs.fileInput.click()">
-          📎
-        </button>
-        <input type="file" id="fileInput" ref="fileInput" class="hidden" @change="handleFileChange" multiple />
-      </div>
-
-      <Button type="submit" variant="secondary"
-        class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md flex items-center justify-center"
-        :disabled="isLoading">
-        <span v-if="!isLoading">Analyze</span>
-        <span v-else>
-          <svg class="animate-spin h-5 w-5 text-white ml-2 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24">
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
-        </span>
-      </Button>
-    </div>
-  </form>
+  
 </template>

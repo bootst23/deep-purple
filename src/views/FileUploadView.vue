@@ -1,18 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
-    <!-- Navigation Buttons -->
-    <button
-      class="absolute top-4 right-60 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-      @click="navigateToFileInput"
-    >
-      File Input Analyze
-    </button>
-    <button
-      class="absolute top-4 right-10 bg-[#8a4fff] text-white px-4 py-2 rounded-full hover:bg-[#6f3bbd] transition"
-      @click="navigateToDirectInput"
-    >
-      Direct Input Analyze
-    </button>
+
     <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
       <h1 class="text-4xl font-bold text-white mb-10 text-center">
         File
@@ -70,44 +58,85 @@
         </button>
       </div>
 
+      <!-- Emotion Results Section -->
       <div class="bg-[#2b223c] p-4 rounded-md mt-6">
         <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">Emotion Results</h2>
 
-        <!-- Emotion Results Section -->
+        <!-- Top Emotions and Pie Chart Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <!-- Pie Chart Section -->
-          <div class="bg-[#1e1b29] p-4 rounded-md flex justify-center">
-            <Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 400px; width: 400px;" />
+          <!-- Top Emotions Section -->
+          <div class="space-y-4">
+            <!-- Dominant Emotion Card -->
+            <div
+              v-if="dominantEmotion"
+              class="bg-[#1e1b29] p-6 rounded-md"
+              :style="{ backgroundColor: emotionConfig[dominantEmotion as keyof typeof emotionConfig]?.color + '20' }"
+            >
+              <div class="flex items-center justify-center">
+                <span class="text-4xl mr-4">
+                  {{ emotionConfig[dominantEmotion as keyof typeof emotionConfig]?.emoji }}
+                </span>
+                <div>
+                  <h3 class="text-2xl font-bold text-white">{{ dominantEmotion }}</h3>
+                  <p class="text-lg text-gray-400">
+                    {{ ((sortedEmotions[0]?.score ?? 0) * 100).toFixed(2) }}%
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Related Emotions -->
+            <div
+              v-for="(emotion, index) in topThreeEmotions.slice(1)"
+              :key="index"
+              class="bg-[#1e1b29] p-4 rounded-md"
+              :style="{ backgroundColor: emotionConfig[emotion.label as keyof typeof emotionConfig]?.color + '20' }"
+            >
+              <div class="flex items-center">
+                <span class="text-2xl mr-2">
+                  {{ emotionConfig[emotion.label as keyof typeof emotionConfig]?.emoji }}
+                </span>
+                <div>
+                  <h3 class="text-lg font-bold text-white">{{ emotion.label }}</h3>
+                  <p class="text-md text-gray-400">{{ (emotion.score * 100).toFixed(2) }}%</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Top Emotions Section -->
-          <div class="bg-[#1e1b29] p-6 rounded-md">
-            <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Top Emotions</h3>
-            <ul class="list-disc pl-5 text-[#c3bdd7] text-[1.125rem]">
-              <li v-for="emotion in topThreeEmotions" :key="emotion.label">
-                {{ emotion.label }}: {{ (emotion.score * 100).toFixed(2) }}%
-              </li>
-            </ul>
+
+          <!-- Pie Chart Section -->
+          <div class="bg-[#1e1b29] p-4 rounded-md justify-center">
+            <h4 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Emotion Distribution</h4>
+            <div><Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px; width: 300px;" /></div> 
           </div>
         </div>
 
         <!-- Summary, Insights, and Suggested Response Section -->
         <div class="mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
-          <strong>Dominant Emotion:</strong> {{ dominantEmotion }}<br />
-          <p class="text-[#c3bdd7]">{{ summary }}</p>
+          <div class="bg-[#1e1b29] p-4 rounded-md">
+            <p class="text-[#c3bdd7]">
+              <strong class="text-purple-300">Dominant Emotion:</strong> {{ dominantEmotion }}<br />
+              {{ summary }}
+            </p>
+          </div>
         </div>
 
         <div class="mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
-          <ul class="list-disc pl-5 text-[#c3bdd7]">
-            <li v-for="(insight, index) in insights" :key="index">{{ insight }}</li>
-          </ul>
+          <div class="bg-[#1e1b29] p-4 rounded-md">
+            <ul class="list-disc pl-5 text-[#c3bdd7]">
+              <li v-for="(insight, index) in insights" :key="index">{{ insight }}</li>
+            </ul>
+          </div>
         </div>
 
         <div class="mt-6">
           <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
-          <p class="text-[#c3bdd7]">{{ suggestedResponse }}</p>
+          <div class="bg-[#1e1b29] p-4 rounded-md">
+            <p class="text-[#c3bdd7]">{{ suggestedResponse }}</p>
+          </div>
         </div>
       </div>
 
@@ -151,7 +180,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
 import { ref, computed } from "vue";
 import axios from "axios";
 import { Pie } from "vue-chartjs";
@@ -171,6 +199,23 @@ import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
+const emotionConfig = {
+  Sadness: { emoji: "😢", color: "#36A2EB" }, // Blue
+  Joy: { emoji: "😊", color: "#FFCE56" }, // Yellow
+  Love: { emoji: "❤️", color: "#FF6384" }, // Red
+  Anger: { emoji: "😡", color: "#FF9F40" }, // Orange
+  Fear: { emoji: "😨", color: "#9966FF" }, // Purple
+  Surprise: { emoji: "😲", color: "#4BC0C0" }, // Teal
+};
+
+const sortedEmotions = computed(() => {
+  return emotionResult.value
+    .slice()
+    .sort((a, b) => b.score - a.score);
+});
+
+
+
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
 const emotionResult = ref<{ label: string; score: number }[]>([]);
@@ -183,15 +228,6 @@ const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
 const communicationName = ref("");
 const showModal = ref(false);
-const router = useRouter();
-
-function navigateToFileInput() {
-  router.push("/fileUpload");
-}
-
-function navigateToDirectInput() {
-  router.push("/directInput");
-}
 
 function handleFileChange(event: Event) {
   const files = Array.from((event.target as HTMLInputElement).files || []);
