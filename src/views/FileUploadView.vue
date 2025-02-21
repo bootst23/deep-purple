@@ -200,12 +200,14 @@ import { GlobalWorkerOptions } from "pdfjs-dist";
 GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 const emotionConfig = {
-  Sadness: { emoji: "😢", color: "#36A2EB" }, // Blue
-  Joy: { emoji: "😊", color: "#FFCE56" }, // Yellow
-  Love: { emoji: "❤️", color: "#FF6384" }, // Red
-  Anger: { emoji: "😡", color: "#FF9F40" }, // Orange
-  Fear: { emoji: "😨", color: "#9966FF" }, // Purple
-  Surprise: { emoji: "😲", color: "#4BC0C0" }, // Teal
+
+  Anger: { emoji: "😡", color: "#FF6384" },
+  Disgust: { emoji: "🤢", color: "#8DD3C7" }, 
+  Fear: { emoji: "😨", color: "#9966FF" }, 
+  Joy: { emoji: "😊", color: "#FFCE56" }, 
+  Neutral: { emoji: "😐", color: "#d3d3d3" },
+  Sadness: { emoji: "😢", color: "#36A2EB" }, 
+  Surprise: { emoji: "😲", color: "#ffa500" }, 
 };
 
 const sortedEmotions = computed(() => {
@@ -375,7 +377,13 @@ const pieData = computed(() => {
   const labels = emotionResult.value.map((item) => item.label);
   const data = emotionResult.value.map((item) => Number((item.score * 100).toFixed(2)));
   const backgroundColor = [
-    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#8DD3C7",
+    emotionConfig.Anger.color,
+    emotionConfig.Disgust.color,
+    emotionConfig.Fear.color,
+    emotionConfig.Joy.color,
+    emotionConfig.Neutral.color,
+    emotionConfig.Sadness.color,
+    emotionConfig.Surprise.color,
   ];
 
   return {

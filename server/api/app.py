@@ -44,12 +44,13 @@ class BatchTextRequest(BaseModel):
 
 # Label mapping
 label_to_emotion = {
-    0: "Sadness",
-    1: "Joy",
-    2: "Love",
-    3: "Anger",
-    4: "Fear",
-    5: "Surprise"
+    0: "Anger",
+    1: "Disgust",
+    2: "Fear",
+    3: "Joy",
+    4: "Neutral",
+    5: "Sadness",
+    6: "Surprise"
 }
 
 def get_influential_tokens(sentence):
@@ -122,7 +123,6 @@ def generate_dynamic_insights(text, emotion_data, is_batch=False):
         
         Text: "{text}"
         Predicted Emotion: {predicted_emotion}
-        Key Emotional Indicators: {top_influences}
         
         Provide:
         1. Overall sentiment summary
@@ -143,7 +143,6 @@ def generate_dynamic_insights(text, emotion_data, is_batch=False):
         
         Review: "{text}"
         Predicted Emotion: {predicted_emotion}
-        Key Emotional Indicators: {top_influences}
         
         Provide:
         1. Customer emotion summary

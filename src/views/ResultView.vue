@@ -146,11 +146,12 @@ interface EmotionResult {
   id: number;
   name: string;
   content: string;
-  sadness_score: number;
-  joy_score: number;
-  love_score: number;
   anger_score: number;
+  disgust_score: number;
   fear_score: number;
+  joy_score: number;
+  neutral_score: number;
+  sadness_score: number;
   surprise_score: number;
   summary: string;
   suggested_response?: string;
@@ -171,11 +172,12 @@ onMounted(async () => {
     resultStore.setResult(res.data);
     result.value = res.data;
     emotions.value = {
-      sadness: res.data.sadness_score,
-      joy: res.data.joy_score,
-      love: res.data.love_score,
       anger: res.data.anger_score,
+      disgust: res.data.disgust_score,
       fear: res.data.fear_score,
+      joy: res.data.joy_score,
+      neutral: res.data.neutral_score,
+      sadness: res.data.sadness_score,
       surprise: res.data.surprise_score,
     };
 
@@ -202,11 +204,12 @@ function capitalize(word: string) {
 function getEmotionClass(emotion: string) {
   const classes: { [key: string]: { backgroundColor: string; emoji: string } } = {
     anger: { backgroundColor: '#ff4c4c', emoji: '😡' },
-    surprise: { backgroundColor: '#70a1ff', emoji: '😲' },
-    sadness: { backgroundColor: '#3742fa', emoji: '😢' },
-    joy: { backgroundColor: '#2ed573', emoji: '😊' },
-    love: { backgroundColor: '#ffc0cb', emoji: '❤️' },
-    fear: { backgroundColor: '#ffa502', emoji: '😨' },
+    disgust: { backgroundColor: '#32cd32', emoji: '🤢' },
+    fear: { backgroundColor: '#800080', emoji: '😨' },
+    joy: { backgroundColor: '#FFCE56', emoji: '😄' },
+    neutral: { backgroundColor: '#576574', emoji: '😐' },
+    sadness: { backgroundColor: '#1e90ff', emoji: '😢' },
+    surprise: { backgroundColor: '#ffa500', emoji: '😲' },
   };
   return classes[emotion] || { backgroundColor: '#808080', emoji: '❓' };
 }
@@ -215,11 +218,12 @@ function getEmotionClass(emotion: string) {
 function getEmotionColorClass(emotion: string) {
   const classes: { [key: string]: string } = {
     anger: 'bg-[#ff4c4c]',
-    surprise: 'bg-[#70a1ff]',
-    sadness: 'bg-[#3742fa]',
-    joy: 'bg-[#2ed573]',
-    love: 'bg-[#ffc0cb]',
-    fear: 'bg-[#ffa502]',
+    disgust: 'bg-[#32cd32]',
+    fear: 'bg-[#800080]',
+    joy: 'bg-[#FFCE56]',
+    neutral: 'bg-[#576574]',
+    sadness: 'bg-[#1e90ff]',
+    surprise: 'bg-[#ffa500]',
   };
   return classes[emotion] || 'bg-gray-500';
 }
@@ -242,7 +246,15 @@ function renderChart() {
         datasets: [
           {
             data,
-            backgroundColor: ['#3742fa', '#2ed573', '#ffc0cb', '#ff4c4c', '#ffa502', '#70a1ff'],
+            backgroundColor: [
+              '#ff4c4c',
+              '#32cd32',
+              '#800080',
+              '#FFCE56',
+              '#576574',
+              '#1e90ff',
+              '#ffa500',
+            ],
             borderColor: '#fff',
             borderWidth: 1,
           },

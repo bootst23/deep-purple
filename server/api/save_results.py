@@ -45,11 +45,12 @@ async def save_results(request: SaveRequest):
         
         # Initialize emotion scores with default value 0
         emotion_scores = {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
             "anger": 0,
+            "disgust": 0,
             "fear": 0,
+            "joy": 0,
+            "neutral": 0,
+            "sadness": 0,
             "surprise": 0
         }
         
@@ -60,27 +61,29 @@ async def save_results(request: SaveRequest):
                 emotion_scores[label] = emotion["score"]
         
         # Extract emotion scores
-        sadness_score = emotion_scores["sadness"]
-        joy_score = emotion_scores["joy"]
-        love_score = emotion_scores["love"]
         anger_score = emotion_scores["anger"]
+        disgust_score = emotion_scores["disgust"]
         fear_score = emotion_scores["fear"]
+        joy_score = emotion_scores["joy"]
+        neutral_score = emotion_scores["neutral"]
+        sadness_score = emotion_scores["sadness"]
         surprise_score = emotion_scores["surprise"]
 
         cursor.execute(
             """
-            INSERT INTO "Results" (name, content, input_type, sadness_score, joy_score, love_score, anger_score, fear_score, surprise_score, dominant_emotion, summary, actionable_insights, suggested_response)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO "Results" (name, content, input_type, anger_score, disgust_score, fear_score, joy_score, neutral_score, sadness_score, surprise_score, dominant_emotion, summary, actionable_insights, suggested_response)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 request.name,
                 request.content,
                 request.input_type,
-                sadness_score,
-                joy_score,
-                love_score,
                 anger_score,
+                disgust_score,
                 fear_score,
+                joy_score,
+                neutral_score,
+                sadness_score,
                 surprise_score,
                 request.dominant_emotion,
                 request.summary,
@@ -191,12 +194,13 @@ async def get_emotion_trends(
         emotion_trends = [
             {
                 "date": date,
-                "sadness": emotion_data.get("sadness", [0] * len(dates))[i],
-                "joy": emotion_data.get("joy", [0] * len(dates))[i],
                 "anger": emotion_data.get("anger", [0] * len(dates))[i],
+                "disgust": emotion_data.get("disgust", [0] * len(dates))[i],
                 "fear": emotion_data.get("fear", [0] * len(dates))[i],
-                "surprise": emotion_data.get("surprise", [0] * len(dates))[i],
-                "love": emotion_data.get("love", [0] * len(dates))[i]
+                "joy": emotion_data.get("joy", [0] * len(dates))[i],
+                "neutral": emotion_data.get("neutral", [0] * len(dates))[i],
+                "sadness": emotion_data.get("sadness", [0] * len(dates))[i],
+                "surprise": emotion_data.get("surprise", [0] * len(dates))[i]
             }
             for i, date in enumerate(dates)
         ]

@@ -134,11 +134,12 @@ const loading = ref(false);
 
 // Emotion colors configuration
 const emotionColors = {
-  sadness: { border: "#1e90ff", background: "rgba(30, 144, 255, 0.1)" }, // Blue
-  joy: { border: "#ffd700", background: "rgba(255, 215, 0, 0.1)" }, // Yellow
-  love: { border: "#ff69b4", background: "rgba(255, 105, 180, 0.1)" }, // Pink
   anger: { border: "#ff4500", background: "rgba(255, 69, 0, 0.1)" }, // Red
+  disgust: { border: "#32cd32", background: "rgba(50, 205, 50, 0.1)" }, // Green
   fear: { border: "#800080", background: "rgba(128, 0, 128, 0.1)" }, // Purple
+  joy: { border: "#ffd700", background: "rgba(255, 215, 0, 0.1)" }, // Yellow
+  neutral: { border: "#d3d3d3", background: "rgba(211, 211, 211, 0.1)" }, // Light Gray
+  sadness: { border: "#1e90ff", background: "rgba(30, 144, 255, 0.1)" }, // Blue
   surprise: { border: "#ffa500", background: "rgba(255, 165, 0, 0.1)" }, // Orange
 };
 
@@ -277,12 +278,12 @@ async function fetchEmotionTrends() {
 
     // Update chart data
     chartData.value = {
-      labels: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number; love: number }) => trend.date),
+      labels: trends.map((trend: { date: string; anger: number; disgust: number; fear: number; joy: number; neutral: number; sadness: number; surprise: number }) => trend.date),
       datasets: Object.entries(emotionColors)
         .filter(([emotion]) => selectedEmotions.value.length === 0 || selectedEmotions.value.includes(emotion))
         .map(([emotion, colors]) => ({
           label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
-          data: trends.map((trend: { date: string; sadness: number; joy: number; anger: number; fear: number; surprise: number; love: number }) => trend[emotion as keyof typeof trend]),
+          data: trends.map((trend: { date: string; anger: number; disgust: number; fear: number; joy: number; neutral: number; sadness: number; surprise: number }) => trend[emotion as keyof typeof trend]),
           borderColor: colors.border,
           backgroundColor: colors.background,
           fill: true,

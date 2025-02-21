@@ -20,7 +20,6 @@ const showModal = ref(false);
 const communicationName = ref("");
 const isSaveDisabled = ref(true);
 const showInputDetails = ref(false);
-const expandedFileIndex = ref<number | null>(null);
 const fileContents = ref<string[]>([]);
 const dominantEmotion = ref<string>("");
 const summary = ref<string>("");
@@ -31,12 +30,13 @@ const showSuccessModal = ref(false);
 
 // Emotion-specific emojis and colors
 const emotionConfig = {
-  Sadness: { emoji: "😢", color: "#36A2EB" }, // Blue
-  Joy: { emoji: "😊", color: "#FFCE56" }, // Yellow
-  Love: { emoji: "❤️", color: "#FF6384" }, // Red
-  Anger: { emoji: "😡", color: "#FF9F40" }, // Orange
-  Fear: { emoji: "😨", color: "#9966FF" }, // Purple
-  Surprise: { emoji: "😲", color: "#4BC0C0" }, // Teal
+  Anger: { emoji: "😡", color: "#FF6384" },
+  Disgust: { emoji: "🤢", color: "#8DD3C7" }, 
+  Fear: { emoji: "😨", color: "#9966FF" }, 
+  Joy: { emoji: "😊", color: "#FFCE56" }, 
+  Neutral: { emoji: "😐", color: "#d3d3d3" },
+  Sadness: { emoji: "😢", color: "#36A2EB" }, 
+  Surprise: { emoji: "😲", color: "#ffa500" }, 
 };
 
 // Fallback for undefined emotions
@@ -76,42 +76,6 @@ function downloadCSV() {
   link.click();
   document.body.removeChild(link);
 }
-
-const readFilesContent = async () => {
-  aggregatedFileContent.value = "";
-  fileContents.value = [];
-
-  for (const file of selectedFiles.value) {
-    const content = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-
-      if (file.type === "text/plain") {
-        reader.readAsText(file);
-      } else {
-        reject("Unsupported file type");
-      }
-    });
-
-    fileContents.value.push(content);
-    aggregatedFileContent.value += content + "\n\n";
-  }
-};
-
-const toggleFileContent = (index: number) => {
-  expandedFileIndex.value = expandedFileIndex.value === index ? null : index;
-};
-
-const handleFileChange = (event: Event) => {
-  const files = Array.from((event.target as HTMLInputElement).files || []);
-  if (files.length > 0) {
-    selectedFiles.value = files;
-    fileNames.value = files.map((file) => file.name);
-    userInput.value = "";
-    readFilesContent();
-  }
-};
 
 const analyzeFiles = async () => {
   if (userInput.value.trim()) {
@@ -258,13 +222,7 @@ async function saveResultToDB() {
 
     <div class="flex items-center gap-2">
       <div class="relative flex-grow">
-        <Input type="text" placeholder="Type your text or upload files..." class="w-full pr-16" v-model="userInput" />
-        <button type="button"
-          class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white px-2 py-1 rounded-md hover:bg-gray-200 transition"
-          @click="$refs.fileInput.click()">
-          📎
-        </button>
-        <input type="file" id="fileInput" ref="fileInput" class="hidden" @change="handleFileChange" multiple />
+        <Input type="text" placeholder="Type your text here" class="w-full pr-16" v-model="userInput" />
       </div>
 
       <Button type="submit" variant="secondary"
@@ -428,18 +386,6 @@ async function saveResultToDB() {
         <h3 class="text-lg font-bold mb-2">Input Details:</h3>
         <div v-if="userInput.trim()">
           <p class="whitespace-pre-wrap">{{ userInput }}</p>
-        </div>
-        <div v-else-if="fileNames.length > 0">
-          <ul>
-            <li v-for="(file, index) in fileNames" :key="index">
-              <button @click="toggleFileContent(index)" class="text-blue-400 hover:underline">
-                {{ file }}
-              </button>
-              <p v-if="expandedFileIndex === index" class="mt-2 p-2 bg-gray-700 rounded-md">
-                {{ fileContents[index] }}
-              </p>
-            </li>
-          </ul>
         </div>
       </div>
     </div>

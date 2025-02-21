@@ -10,19 +10,22 @@ export default (sequelize, DataTypes) => {
         input_type: {
             type: DataTypes.STRING,
         },
-        sadness_score: {
+        anger_score: {
+            type: DataTypes.FLOAT,
+        },
+        disgust_score: {
+            type: DataTypes.FLOAT,
+        },
+        fear_score: {
             type: DataTypes.FLOAT,
         },
         joy_score: {
             type: DataTypes.FLOAT,
         },
-        love_score: {
+        neutral_score: {
             type: DataTypes.FLOAT,
         },
-        anger_score: {
-            type: DataTypes.FLOAT,
-        },
-        fear_score: {
+        sadness_score: {
             type: DataTypes.FLOAT,
         },
         surprise_score: {
