@@ -1,23 +1,31 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900 text-gray-200">
+    <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-2xl p-6 mt-14 space-y-8">
+          <!-- Title and Description -->
+          <div class="text-center mb-8">
+            <!-- Smaller Title -->
+            <h1 class="text-4xl font-bold text-white mb-2">
+              Batch
+              <span class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
+                Emotion Analysis
+              </span>
+            </h1>
 
-    <div class="w-full max-w-6xl bg-gray-800 rounded-lg shadow-md p-4 mt-14 space-y-6">
-      <h1 class="text-4xl font-bold text-white mb-10 text-center">
-        File
-        <span class="text-purple-300 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
-          Emotion Analysis
-        </span>
-      </h1>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Description (closer to the title) -->
+            <p class="text-md text-gray-300 max-w-2xl mx-auto">
+              Upload multiple files at once to analyze emotions across your content.
+            </p>
+          </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Drag and Drop Section -->
         <div
-          class="border-2 border-dashed border-[#a692cc] bg-[#2b223c] rounded-md flex flex-col items-center justify-center h-60"
+          class="border-2 border-dashed border-[#a692cc] bg-[#2b223c] rounded-lg flex flex-col items-center justify-center h-64 transition-all duration-300 hover:border-purple-400 hover:bg-[#3a2f4d]"
           @dragover="handleDragOver"
           @drop="handleDrop"
         >
           <div class="text-center space-y-2">
-            <div class="text-4xl">+</div>
-            <div class="text-sm">Drag and Drop File Here</div>
+            <div class="text-5xl text-purple-400">+</div>
+            <div class="text-sm text-gray-300">Drag and Drop File Here</div>
           </div>
           <input
             type="file"
@@ -28,7 +36,7 @@
             multiple
           />
           <button
-            class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition"
+            class="mt-4 bg-[#8a4fff] text-white px-6 py-2 rounded-lg hover:bg-[#6f3bbd] transition-all duration-300 transform hover:scale-105"
             @click="$refs.fileInput.click()"
           >
             Browse
@@ -36,20 +44,20 @@
         </div>
 
         <!-- File Content Section -->
-        <div class="h-60">
-          <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">File Content</h2>
+        <div class="h-64">
+          <h2 class="text-xl font-bold text-[#a8a6b3]">File Content</h2>
           <textarea
-            class="w-full mt-2 p-4 bg-[#2b223c] rounded-md text-[#c3bdd7] resize-none h-52"
+            class="w-full mt-2 p-4 bg-[#2b223c] rounded-lg text-[#c3bdd7] resize-none h-52 focus:outline-none focus:ring-2 focus:ring-purple-400"
             readonly
             v-model="aggregatedFileContent"
           ></textarea>
         </div>
       </div>
 
-      <div class="flex flex-col mt-2">
+      <div class="flex flex-col mt-4">
         <div class="text-sm text-[#a8a6b3]">File Name: {{ fileNames.join(', ') }}</div>
         <button
-          class="mt-4 bg-[#8a4fff] text-white px-4 py-2 rounded-md hover:bg-[#6f3bbd] transition w-6/12"
+          class="mt-4 bg-[#8a4fff] text-white px-6 py-2 rounded-lg hover:bg-[#6f3bbd] transition-all duration-300 transform hover:scale-105 w-full md:w-6/12 mx-auto"
           @click="analyzeFiles"
           :disabled="isLoading"
         >
@@ -59,26 +67,26 @@
       </div>
 
       <!-- Emotion Results Section -->
-      <div class="bg-[#2b223c] p-4 rounded-md mt-6">
-        <h2 class="text-[1.125rem] font-bold text-[#a8a6b3]">Emotion Results</h2>
+      <div class="bg-[#2b223c] p-6 rounded-lg mt-8">
+        <h2 class="text-xl font-bold text-[#a8a6b3]">Emotion Results</h2>
 
         <!-- Top Emotions and Pie Chart Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
           <!-- Top Emotions Section -->
-          <div class="space-y-4">
+          <div class="space-y-6">
             <!-- Dominant Emotion Card -->
             <div
               v-if="dominantEmotion"
-              class="bg-[#1e1b29] p-6 rounded-md"
+              class="bg-[#1e1b29] p-6 rounded-lg shadow-lg"
               :style="{ backgroundColor: emotionConfig[dominantEmotion as keyof typeof emotionConfig]?.color + '20' }"
             >
               <div class="flex items-center justify-center">
-                <span class="text-4xl mr-4">
+                <span class="text-5xl mr-4">
                   {{ emotionConfig[dominantEmotion as keyof typeof emotionConfig]?.emoji }}
                 </span>
                 <div>
-                  <h3 class="text-2xl font-bold text-white">{{ dominantEmotion }}</h3>
-                  <p class="text-lg text-gray-400">
+                  <h3 class="text-3xl font-bold text-white">{{ dominantEmotion }}</h3>
+                  <p class="text-xl text-gray-400">
                     {{ ((sortedEmotions[0]?.score ?? 0) * 100).toFixed(2) }}%
                   </p>
                 </div>
@@ -89,33 +97,32 @@
             <div
               v-for="(emotion, index) in topThreeEmotions.slice(1)"
               :key="index"
-              class="bg-[#1e1b29] p-4 rounded-md"
+              class="bg-[#1e1b29] p-4 rounded-lg shadow-md"
               :style="{ backgroundColor: emotionConfig[emotion.label as keyof typeof emotionConfig]?.color + '20' }"
             >
               <div class="flex items-center">
-                <span class="text-2xl mr-2">
+                <span class="text-3xl mr-2">
                   {{ emotionConfig[emotion.label as keyof typeof emotionConfig]?.emoji }}
                 </span>
                 <div>
-                  <h3 class="text-lg font-bold text-white">{{ emotion.label }}</h3>
-                  <p class="text-md text-gray-400">{{ (emotion.score * 100).toFixed(2) }}%</p>
+                  <h3 class="text-xl font-bold text-white">{{ emotion.label }}</h3>
+                  <p class="text-lg text-gray-400">{{ (emotion.score * 100).toFixed(2) }}%</p>
                 </div>
               </div>
             </div>
           </div>
 
-
           <!-- Pie Chart Section -->
-          <div class="bg-[#1e1b29] p-4 rounded-md justify-center">
-            <h4 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Emotion Distribution</h4>
-            <div><Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px; width: 300px;" /></div> 
+          <div class="bg-[#1e1b29] p-6 rounded-lg shadow-lg flex flex-col items-center justify-center">
+            <h4 class="text-xl font-bold text-[#a8a6b3] mb-6">Emotion Distribution</h4>
+            <div><Pie :data="pieData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px; width: 300px;" /></div>
           </div>
         </div>
 
         <!-- Summary, Insights, and Suggested Response Section -->
-        <div class="mt-6">
-          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Summary</h3>
-          <div class="bg-[#1e1b29] p-4 rounded-md">
+        <div class="mt-8">
+          <h3 class="text-xl font-bold text-[#a8a6b3] mb-6">Summary</h3>
+          <div class="bg-[#1e1b29] p-6 rounded-lg shadow-md">
             <p class="text-[#c3bdd7]">
               <strong class="text-purple-300">Dominant Emotion:</strong> {{ dominantEmotion }}<br />
               {{ summary }}
@@ -123,18 +130,18 @@
           </div>
         </div>
 
-        <div class="mt-6">
-          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Actionable Insights</h3>
-          <div class="bg-[#1e1b29] p-4 rounded-md">
+        <div class="mt-8">
+          <h3 class="text-xl font-bold text-[#a8a6b3] mb-6">Actionable Insights</h3>
+          <div class="bg-[#1e1b29] p-6 rounded-lg shadow-md">
             <ul class="list-disc pl-5 text-[#c3bdd7]">
               <li v-for="(insight, index) in insights" :key="index">{{ insight }}</li>
             </ul>
           </div>
         </div>
 
-        <div class="mt-6">
-          <h3 class="text-[1.25rem] font-bold text-[#a8a6b3] mb-4">Suggested Response</h3>
-          <div class="bg-[#1e1b29] p-4 rounded-md">
+        <div class="mt-8">
+          <h3 class="text-xl font-bold text-[#a8a6b3] mb-6">Suggested Response</h3>
+          <div class="bg-[#1e1b29] p-6 rounded-lg shadow-md">
             <p class="text-[#c3bdd7]">{{ suggestedResponse }}</p>
           </div>
         </div>
@@ -142,7 +149,7 @@
 
       <!-- Save Results Button -->
       <button
-        class="w-full bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e] transition mt-6"
+        class="w-full bg-[#2ed573] text-white px-6 py-3 rounded-lg hover:bg-[#27c56e] transition-all duration-300 transform hover:scale-105 mt-8"
         @click="showModal = true"
         :disabled="isSaveDisabled"
       >
@@ -151,29 +158,35 @@
 
       <!-- Save Results Modal -->
       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-[#1e1b29] p-6 rounded-md shadow-md w-96">
-          <h2 class="text-[1.125rem] font-bold text-white mb-4">Name this Communication</h2>
+        <div class="bg-[#1e1b29] p-8 rounded-lg shadow-2xl w-96">
+          <h2 class="text-xl font-bold text-white mb-6">Name this Communication</h2>
           <input
             type="text"
             v-model="communicationName"
             placeholder="Enter a name..."
-            class="w-full p-2 mb-4 border border-[#a692cc] rounded-md bg-[#2b223c] text-[#c3bdd7]"
+            class="w-full p-3 mb-6 border border-[#a692cc] rounded-lg bg-[#2b223c] text-[#c3bdd7] focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
           <div class="flex justify-end space-x-4">
             <button
-              class="bg-[#ff4c4c] text-white px-4 py-2 rounded-md hover:bg-[#ff2a2a]"
+              class="bg-[#ff4c4c] text-white px-6 py-2 rounded-lg hover:bg-[#ff2a2a] transition-all duration-300 transform hover:scale-105"
               @click="showModal = false"
             >
               Cancel
             </button>
             <button
-              class="bg-[#2ed573] text-white px-4 py-2 rounded-md hover:bg-[#27c56e]"
+              class="bg-[#2ed573] text-white px-6 py-2 rounded-lg hover:bg-[#27c56e] transition-all duration-300 transform hover:scale-105"
               @click="saveResultToDB"
             >
               Save
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Custom Notification -->
+      <div v-if="showNotification" class="fixed bottom-8 right-8 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-4">
+        <span>Data saved successfully!</span>
+        <button @click="showNotification = false" class="text-white hover:text-gray-200">×</button>
       </div>
     </div>
   </div>
@@ -200,14 +213,13 @@ import { GlobalWorkerOptions } from "pdfjs-dist";
 GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 const emotionConfig = {
-
   Anger: { emoji: "😡", color: "#FF6384" },
-  Disgust: { emoji: "🤢", color: "#8DD3C7" }, 
-  Fear: { emoji: "😨", color: "#9966FF" }, 
-  Joy: { emoji: "😊", color: "#FFCE56" }, 
+  Disgust: { emoji: "🤢", color: "#8DD3C7" },
+  Fear: { emoji: "😨", color: "#9966FF" },
+  Joy: { emoji: "😊", color: "#FFCE56" },
   Neutral: { emoji: "😐", color: "#d3d3d3" },
-  Sadness: { emoji: "😢", color: "#36A2EB" }, 
-  Surprise: { emoji: "😲", color: "#ffa500" }, 
+  Sadness: { emoji: "😢", color: "#36A2EB" },
+  Surprise: { emoji: "😲", color: "#ffa500" },
 };
 
 const sortedEmotions = computed(() => {
@@ -215,8 +227,6 @@ const sortedEmotions = computed(() => {
     .slice()
     .sort((a, b) => b.score - a.score);
 });
-
-
 
 const selectedFiles = ref<File[]>([]);
 const aggregatedFileContent = ref<string>("");
@@ -230,6 +240,7 @@ const fileNames = ref<string[]>([]);
 const isSaveDisabled = ref(true);
 const communicationName = ref("");
 const showModal = ref(false);
+const showNotification = ref(false);
 
 function handleFileChange(event: Event) {
   const files = Array.from((event.target as HTMLInputElement).files || []);
@@ -344,9 +355,12 @@ async function saveResultToDB() {
       suggested_response: suggestedResponse.value,
     });
     console.log(emotionResult.value);
-    alert("Results saved successfully.");
+    showNotification.value = true;
+    setTimeout(() => {
+      showNotification.value = false;
+    }, 3000);
     isSaveDisabled.value = true;
-    showModal.value = false; 
+    showModal.value = false;
   } catch (error) {
     console.error("Error saving results:", error);
     alert("Failed to save results. Please try again.");
@@ -406,5 +420,5 @@ const topThreeEmotions = computed(() => {
 </script>
 
 <style scoped>
-
+/* Add any custom styles here */
 </style>
