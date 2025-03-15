@@ -265,7 +265,7 @@ async function fetchEmotionTrends() {
   error.value = "";
   
   try {
-    const response = await axios.get("https://deep-purple-databaseservice.onrender.com/emotion-trends", {
+    const response = await axios.get("https://deep-purple-databaseservice-fbj1.onrender.com/emotion-trends", {
       params: {
         start_date: startDate.value,
         end_date: endDate.value,

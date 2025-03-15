@@ -310,7 +310,7 @@ async function analyzeFiles() {
 
   try {
     const endpoint = selectedFiles.value.length === 1 ? "/analyze" : "/analyze-batch";
-    const ANALYZE_API_URL = `https://deep-purple-modelapi.onrender.com${endpoint}`;
+    const ANALYZE_API_URL = `https://deep-purple-modelapi-34pd.onrender.com${endpoint}`;
     const payload = selectedFiles.value.length === 1 ? { text: aggregatedFileContent.value } : { texts: [aggregatedFileContent.value] };
 
     const response = await axios.post(ANALYZE_API_URL, payload, {
@@ -341,7 +341,7 @@ async function saveResultToDB() {
     alert("Please provide a name for this communication.");
     return;
   }
-  const SAVE_API_URL = "https://deep-purple-databaseservice.onrender.com/save";
+  const SAVE_API_URL = "https://deep-purple-databaseservice-fbj1.onrender.com/save";
   try {
     await axios.post(SAVE_API_URL, {
       name: communicationName.value,
